@@ -1,5 +1,5 @@
 # VGMSlap
-VGMSlap is an open-source, MS-DOS based player for Yamaha OPL1/2/3 Video Game
+VGMSlap (VGM Silly Little Adlib Player) is an open-source, MS-DOS based player for Yamaha OPL1/2/3 Video Game
 Music (VGM) files.  It features a visually pleasing display of each synthesizer
 channel's parameters, GD3 tags, and simple playlist support.
 
@@ -11,7 +11,7 @@ See the program readme (VGMSLAP.TXT) for additional info.
 
 VGMSlap is written with **Open Watcom C 2.0** in mind.  Assuming you're on DOS/Windows and you have your Watcom environment variables and PATH set correctly, the following command should build VGMSLAP.EXE:
 
-    WCL -bt=dos -mm -wx -otexan -fe=vgmslap.exe vgmslap.c  ./zlib/zlib.lib
+    WCL -bt=dos -mm -wx -otexan -fe=vgmslap.exe vgmslap.c ./zlib/zlib.lib
 
 You may need to modify this slightly if cross-compiling from Linux (probably just the path to zlib.lib).
 
