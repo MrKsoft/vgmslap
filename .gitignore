@@ -1,3 +1,4 @@
+# Ignore test data unrelated to the code itself
 *.[Ee][Rr][Rr]
 *.[Tt][Mm][Pp]
 *.[Vv][Gg][Mm]
