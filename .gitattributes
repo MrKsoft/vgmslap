@@ -1,2 +1,5 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Since this is a DOS program, force CRLF line endings.
+text eol=crlf
+
+# Don't modify binary files
+*.lib binary

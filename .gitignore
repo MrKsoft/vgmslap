@@ -1,0 +1,13 @@
+*.[Ee][Rr][Rr]
+*.[Tt][Mm][Pp]
+*.[Vv][Gg][Mm]
+*.[Vv][Gg][Zz]
+*.[Oo][Bb][Jj]
+*.[Ee][Xx][Ee]
+*.[Pp][Ll][Ss]
+_BUILD.BAT
+_RUN.BAT
+zlib-1.2.11/
+backup/
+notes/
+releases/

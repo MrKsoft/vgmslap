@@ -1,0 +1,267 @@
+################################################################################
+#  __      _______ __  __  _____ _             _                               #
+#  \ \    / / ____|  \/  |/ ____| |           | |                              #
+#   \ \  / / |  __| \  / | (___ | | __ _ _ __ | |                              #
+#    \ \/ /| | |_ | |\/| |\___ \| |/ _` | '_ \| |   by Wafflenet, 2023-2024    #
+#     \  / | |__| | |  | |____) | | (_| | |_) |_|       www.wafflenet.com      #
+#      \/   \_____|_|  |_|_____/|_|\__,_| .__/(_)                              #
+#       (VGM Silly Little AdLib Player) | |                                    #
+#                                       |_|                                    #
+#                                                                              #
+################################################################################
+
+== [ About ] ===================================================================
+
+VGMSlap is an open-source, MS-DOS based player for Yamaha OPL1/2/3 Video Game
+Music (VGM) files.  It features a visually pleasing display of each synthesizer
+channel's parameters, GD3 tags, and simple playlist support.
+
+
+== [ System Requirements ] =====================================================
+
+Despite its simple appearance, for BEST results, you should run VGMSlap on a
+fast 386 or higher.  VGMSlap runs in real mode, though, so it should technically
+run on any old x86 machine, and only 640k of RAM is needed (probably less but I
+haven't tested for exact numbers).  A VGA card supporting 80x50 text mode is
+required.
+
+I am not a trained programmer with an eye for optimization; in fact, this is
+basically only my second ever C program of any meaningful substance.  I hope
+that I will be able to optimize VGMSlap over time as I learn more.  If you are
+experiencing performance issues, check out the Performance Tips section below.
+
+You'll also need a sound card with a Yamaha OPL2 (YM3812), Yamaha OPL3 (YMF262)
+or compatible chip.  The dual OPL2 chips on the Sound Blaster Pro 1.0 card are
+also supported, although this is not extensively tested since I do not own a
+card.
+
+You will only be able to play VGMs compatible with your card.  Check the table:
+
+.---------------------------------------------------.
+| Your Chip               | Compatible VGMs         |
+|---------------------------------------------------|
+| Yamaha YM3812 (OPL2)    | Yamaha YM3526 (OPL)     |
+|                         | Yamaha YM3812 (OPL2)    |
+|---------------------------------------------------|
+| 2x Yamaha YM3812 (OPL2) | Yamaha YM3526 (OPL)     |
+|                         | Yamaha YM3812 (OPL2)    |
+|                         | 2x Yamaha YM3812 (OPL2) |
+|---------------------------------------------------|
+| Yamaha YMF262 (OPL3)    | Yamaha YM3526 (OPL)     |
+|                         | Yamaha YM3812 (OPL2)    |
+|                         | 2x Yamaha YM3812 (OPL2) |
+|                         | Yamaha YMF262 (OPL3)    |
+'---------------------------------------------------'
+
+
+== [ Usage ] ===================================================================
+
+Simply call VGMSlap from the command line along with the name of a VGM file or
+playlist.  (More info on playlists is provided later in this document)
+
+VGMSLAP FILENAME.VGM
+
+Both VGM and gzipped VGM (VGZ) files are supported.  VGZ files will be
+temporarily decompressed to the same folder that VGMSLAP.EXE is in.
+
+Once in the program, a few keys are available:
+
+Arrow Keys:     Move forward and backwards through a playlist.
+                (Only available if using a playlist)
+
+Esc:            Quit VGMSlap				 
+
+R:              Reset the OPL chip.
+                Note, this WILL mess up playback.  It's basically a debug key I
+				left in, but it might be useful as an emergency panic button!
+
+
+== [ How to Read the Channel Display ] =========================================
+
+VGMSlap puts a lot of info on the screen about the internal OPL registers, so
+you can see exactly what is going on behind the scenes to make the chip produce
+sound.  Here's a quick primer on how to read this information.  It does assume
+that you have a slight understanding of how FM chips work - there are many
+resources online that go over this info in detail.
+
+Here is an example channel, a standard two-operator channel:
+
+                    .-Ch.01--------------------------------.
+                    |#--.    /\/\ E675 T--K 2 1.5 00     3 |
+                    |   |->#                         x2 204|
+                    |#--'    ^-^- F324 -VS- F --- 2A    (n)|
+                    '--------------------------------------'
+					 (A)     (B)  (C)  (D) (E)(F) (G)(H)(I)
+
+    A. A small diagram shows how the modulator (cyan) and carrier (cyan) are
+	   connected and output the note (yellow).  Note these colors as they are
+	   used throughout the channel table.
+	   
+	B. ASCII-art approximations of the OPL waveforms currently selected.
+	
+	C. Operator ADSR (Attack/Decay/Sustain/Release) envelope data, in that
+       order.	Values are from 0 to F (15).
+	   
+	D. Operator flags for Tremolo/Amplitude Vibrato (T), Frequecy Vibrato (V),
+	   Sound Sustaining (S), and Key Scaling (K), in that order.
+	   
+	E. Frequency multiplication factor.
+	
+	F. Key scale attenuation level, in dB per octave.
+	
+	G. Output level.  This is technically "output attenuation", that is, a value
+	   of "00" means full volume, and "3F" is silence.
+	
+	H. Feedback modulation factor (the amount of the modulator that is sent back
+	   into itself).  Note that for space reasons, this is not depicted in the
+	   diagram at (A).
+	   
+	I. Note information.  The top number is the "block number" (roughly the
+	   octave) and the middle number is the frequency number.  These can be
+	   converted to a sound frequency in Hz using the equation:
+	   
+	   Frequency = (49716*FrequencyNumber)/(2^(20-BlockNumber))
+	   
+	   I do eventually plan to add this math and automatically convert it to
+	   a note value, but it's a lot of multiplication and division and has
+	   performance implications, so there's still some investigation needed.
+	   
+	   The bottom line has a music note - represented as "n" in the drawing
+	   above - which lights up when a channel's key-on flag is set.
+	   On 2xOPL2 or OPL3 VGMs, you will also see the parentheses surrounding
+	   the note.  These will light up based on the stereo panning for that
+	   channel.  On OPL2 VGMs these will not be visible.
+	   
+For four-operator OPL3 channels, two channels are combined.  The first two lines
+will be the first channel's operators, and the second two lines will be the
+second channel's operators.  A "4OP" indicator will show in the top-right of the
+channel.
+
+
+== [ Configuration ] ===========================================================
+
+VGMSLAP.CFG is used to configure your OPL chip's I/O port and some playback and
+performance options.  I've included info on the options in the included default
+VGMSLAP.CFG, and I don't feel like repeating myself here, so go check it out for
+more info.
+
+== [ Setting Up Playlists ] ====================================================
+
+A playlist can be made to play multiple VGMs in sequence.
+Simply create a text file with the first line being #VGMLIST and then each line
+after that containing a single filename.  Playlist entries can use relative
+paths from the current working directory, or full paths to the files.
+
+An example of a playlist could look like the following:
+
+#VGMLIST
+C:\MUSIC\ALIBI.VGM
+C:\STUFF\HIGHWAYS.VGZ
+C:\MUSIC\TREEONFI.VGM
+
+Then, just call VGMSlap with the playlist name instead of a VGM file!
+Extension doesn't matter, it can just be .TXT, though I usually use .PLS to
+differentiate them from normal text files.  It's your call.
+
+
+== [ Performance Tips ] ========================================================
+
+As I mentioned before, VGMSlap isn't the fastest player in its current state.
+Here are some tips that may help if your music is lagging or stuttering.
+
+- For slower machines, you can edit VGMSLAP.CFG and lower the timing resolution
+  by changing the DIVIDER option, but playback accuracy will be reduced.
+  You probably won't have to set this very high - DIVIDER 2 worked well on a
+  386SX-40 for me, and even just DIVIDER 3 made my 286-12 happy!
+  
+- There is a lot of behind the scenes code that goes into interpreting and
+  displaying the OPL channel data.  This is additional CPU overhead and if you
+  have a slow VGA card, the screen updates might introduce even more lag.  You
+  might want to try the STRUGGLE option in VGMSLAP.CFG, which removes the
+  channel display completely.  It's also nice if you just want a less busy
+  screen!
+
+- VGMSlap runs entirely in real mode and thus currently does not use memory
+  above 640k, so VGMs have to be streamed from disk.  Most systems I've tested
+  on have been fast enough to handle this without issue, but in the few cases of
+  slower disks, I've had success running VGMSlap and VGMs from a RAM Drive, or
+  using SmartDrive caching.
+
+
+== [ Known Issues ] ============================================================
+
+- There is probably not as much error checking as would be preferred.  Don't try
+  to get cheeky and make VGMSlap do weird things, or else face the consequences!
+  
+- At least on my test system, OPL2 is still being detected as OPL3.  I have
+  written VGMSlap to use the "standard" detection methods but they don't seem to
+  work on my only OPL2 card (Sound Blaster 2.0, CT1350B).  It still plays OPL2
+  VGMs correctly, though obviously loading 2xOPL2/OPL3 VGMs is NOT going to
+  sound right.  The detection does work fine in emulation, so I am not sure if
+  it's just my specific setup.
+  This also, to some extent, may apply to 2xOPL2, as I literally do not have any
+  real card to test with.  I got it working in DOSBox, at least.  If you own one
+  of these cards, I would be curious to hear about your experience.
+
+
+== [ License Info ] ============================================================
+
+VGMSlap incorporates zlib 1.2.11:
+
+ (C) 1995-2017 Jean-loup Gailly and Mark Adler
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+  Jean-loup Gailly        Mark Adler
+  jloup@gzip.org          madler@alumni.caltech.edu
+  
+  
+The VGMSlap software and code itself is licensed under the MIT License:
+
+  Copyright 2023-2024 Wafflenet
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the “Software”), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+  
+
+== [ Contact ] =================================================================
+
+If you want to contact me directly, there are many ways to do so:
+
+Email: kyle@wafflenet.com
+Discord: @mrksoft
+Twitter/X: @MrKsoft486
+Mastodon/Fediverse: @mrksoft@bitbang.social
+
+PS. If you're looking for VGM files to play in VGMSlap, why not check out
+Wafflenet's very own OPL Archive?  It's an ever-growing collection of VGMs for
+OPL-series sound chips, and can be found at www.opl.wafflenet.com!
