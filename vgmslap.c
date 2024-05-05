@@ -394,10 +394,6 @@ int main(int argc, char** argv)
 		vgmFileName = fileName;	
 	}
 	
-	// Reset screen state
-	setVideoMode(50);
-	clearTextScreen();
-	
 	// Change the timer to the correct speed
 	initTimer(playbackFrequency);
 	
@@ -566,6 +562,10 @@ void initPlayback(void)
 					
 	// Set up the OPL chip
 	resetOPL();
+	
+	// Reset screen state
+	setVideoMode(50);
+	clearTextScreen();
 	
 	// Draw static parts of the UI
 	clearInterface();
@@ -1289,11 +1289,10 @@ void drawTextUI(void)
 	}
 	sprintf(txtDrawBuffer, "VGMSlap! %s", VGMSLAP_VERSION);
 	drawStringAtPosition(txtDrawBuffer,0,0,0x1F);
-	//drawStringAtPosition("VGMSlap! \xE1\x65ta Version",0,0,0x1F);
 	if (playlistMode == 0)
 	{
-		drawStringAtPosition("Now playing:             ",54,0,0x1F);
-		drawStringAtPosition(basename(fileName),67,0,0x1E);
+		drawStringAtPosition("Now playing:             ",55,0,0x1F);
+		drawStringAtPosition(basename(fileName),68,0,0x1E);
 	}
 	else if (playlistMode == 1)
 	{
@@ -1303,19 +1302,19 @@ void drawTextUI(void)
 	}
 	
 	// GD3 tag info
-	drawStringAtPosition("Title:",GD3_LABEL_START_X,GD3_START_Y,0x07);
+	drawStringAtPosition("Title:  ",GD3_LABEL_START_X,GD3_START_Y,0x07);
 	sprintf(txtDrawBuffer, "%S", currentGD3Tag.trackNameE);
 	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y,0x0B);
 	
-	drawStringAtPosition("Artist:",GD3_LABEL_START_X,GD3_START_Y+1,0x07);
+	drawStringAtPosition("Artist: ",GD3_LABEL_START_X,GD3_START_Y+1,0x07);
 	sprintf(txtDrawBuffer, "%S", currentGD3Tag.originalAuthorE);
 	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+1,0x0B);
 	
-	drawStringAtPosition("Game:",GD3_LABEL_START_X,GD3_START_Y+2,0x07);
+	drawStringAtPosition("Game:   ",GD3_LABEL_START_X,GD3_START_Y+2,0x07);
 	sprintf(txtDrawBuffer, "%S", currentGD3Tag.gameNameE);
 	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+2,0x0B);
 	
-	drawStringAtPosition("Date:",GD3_LABEL_START_X,GD3_START_Y+3,0x07);
+	drawStringAtPosition("Date:   ",GD3_LABEL_START_X,GD3_START_Y+3,0x07);
 	sprintf(txtDrawBuffer, "%S", currentGD3Tag.releaseDate);
 	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+3,0x0B);
 	
@@ -1420,6 +1419,9 @@ void setVideoMode(int mode)
 		registers.w.bx = 0x0000;
 		// Call Int 10h again
 		int86(0x10, &registers, &registers);
+		// We don't want the blinking cursor to display in 50-column mode
+		outp(0x3D4, 0x0A);
+		outp(0x3D5, 0x20);
 		textRows = 50;
 	}
 	
