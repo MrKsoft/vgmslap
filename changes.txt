@@ -1,3 +1,10 @@
 == [ Release 1 - 2024/05/05] ===================================================
 
-Initial release.
+The very first public release of VGMSlap!
+
+Implements my original planned feature set to the current extent of my ability:
+
+- Plays VGM and VGZ files that use OPL1, OPL2, 2xOPL2, and OPL3
+- ASCII channel visualization
+- GD3 tag support
+- Playlist support
