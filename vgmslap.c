@@ -85,7 +85,7 @@ void initTimer(uint16_t);
 void resetTimer (void);
 
 // VGM parsing functions
-void getNextCommandData(void);
+int getNextCommandData(void);
 wchar_t* getNextGd3String(void);
 int loadVGM(void);
 void populateCurrentGd3(void);
@@ -2184,15 +2184,23 @@ int loadVGM(void)
 }
 
 // Move through the file based on the commands encountered.  Loads in data for supported commands, to be processed during playback.
-void getNextCommandData(void)
+int getNextCommandData(void)
 {
 	uint32_t currentWait = 0;
 	// Proper functioning of this function is based on the file already being seeked to the VGM data offset
 	
 	// Read the first byte to see what command we are looking at.
 	// The byte length can be different depending on the command, so we have to decide how many bytes to read in.
-	readBytes(1);
-	commandID = vgmFileBuffer[0];
+	if (readBytes(1) == 0)
+	{
+		commandID = vgmFileBuffer[0];
+	}
+	// Read failed - probably ran out of bytes.  End song.
+	else
+	{
+		programState = 2;
+	}
+	
 	
 	// Mega size switch case for all known VGM commands.  Most will be ignored, though, since they don't apply to OPL.
 	// We still need to handle the right number of bytes though, especially for multichip VGMs that happen to have OPL in them too.
@@ -2775,12 +2783,24 @@ void getNextCommandData(void)
 			readBytes(4);
 			break;	
 		
-		// We found something else.  Which shouldn't be possible.  What do we do now?  Seppuku!
+		// We found something else.
+		// If the file pointer has advanced into the GD3 header, just treat it like the end of the song.  (That is to say that we probably have a malformed VGM missing the "end of song data" command.
+		// On the other hand, if we are somewhere in the middle of the song, we can't just skip an invalid command because we don't know how many bytes that command should be, so error out.
 		default:
-			killProgram(6);
+			if (currentVGMHeader.gd3Offset > 0 && (ftell(vgmFilePointer) >= (currentVGMHeader.gd3Offset+0x14)))
+			{
+				programState = 2;
+				return 1;
+			}
+			else
+			{
+				killProgram(6);
+			}
 	}
 	// Based on whatever the last wait value was, set what sample we "should" be on.
 	dataCurrentSample = dataCurrentSample + (currentWait + 1);
+	// Successful, return good status
+	return 0;
 }
 
 // Extract the next null terminated string from the overall GD3 tag
@@ -2887,10 +2907,16 @@ int processCommands(void)
 	// This isn't -great- due to the high timer resolution we are always lagging a bit and it basically locks the app up on slow CPUs.
 	while (dataCurrentSample < tickCounter)
 	{
-		getNextCommandData();
+		// Get the next command data, but stop processing if it didn't work
+		if (getNextCommandData() != 0)
+		{
+			break;
+		}
 
-		// If end of song data, check for loop, or quit
-		if (commandID == 0x66 )
+		// If end of song data, check for loop, or end song
+		// Properly formatted VGMs use command 0x66 for this.
+		// If this command is missing, readBytes via getNextCommandData should have caught that we overran the end of the file.
+		if (commandID == 0x66)
 		{
 			if (loopCount < loopMax && currentVGMHeader.loopOffset > 0)
 			{
@@ -3044,7 +3070,7 @@ void killProgram(int errorCode)
 			printf("No supported OPL chips in this VGM!\n");
 			break;
 		case 6:
-			printf("(%08X) : Invalid command! Bailing out.\n", fileCursorLocation, commandID);
+			printf("(%08X) : Invalid command %08X! Bailing out.\n", fileCursorLocation, commandID);
 			break;
 		case 7:
 			printf("No OPL detected at %Xh!\n", settings.oplBase);
