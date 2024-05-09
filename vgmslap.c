@@ -352,8 +352,9 @@ int main(int argc, char** argv)
 	detectOPL();
 	
 	// Load initially requested file
+	errno = 0;
 	initialFilePointer = fopen(fileName,"rb");
-	if (!initialFilePointer)
+	if (initialFilePointer == NULL)
 	{
 		killProgram(2);
 	}
@@ -377,8 +378,9 @@ int main(int argc, char** argv)
 	// If playlist was found, open playlist, jump to playlist handler and load first song
 	if (playlistMode == 1)
 	{
+		errno = 0;
 		playlistFilePointer = fopen(fileName,"rt");
-		if (!playlistFilePointer)
+		if (playlistFilePointer == NULL)
 		{
 			
 			killProgram(9);
@@ -394,10 +396,7 @@ int main(int argc, char** argv)
 		vgmFileName = fileName;	
 	}
 	
-	// Change the timer to the correct speed
-	initTimer(playbackFrequency);
-	
-	// Start playback incl. VGM load
+	// Start playback incl. VGM load and timer init
 	initPlayback();
 
 	while (programState > 0 && programState < 3)
@@ -557,6 +556,13 @@ void inputHandler (void)
 // Prepare for and start playback state
 void initPlayback(void)
 {
+	// Set timer back to normal - reduces loading/decompression performance if we are still processing interrupts
+	if (fastTickRate != 0)
+	{
+		resetTimer();
+		fastTickRate = 0;
+	}
+	
 	// Prepare VGM file
 	loadVGM();
 					
@@ -587,6 +593,12 @@ void initPlayback(void)
 		writeOPL(0x105,0x01);
 	}
 	
+	// Set interrupt timer if it hasn't already been done
+	if (fastTickRate == 0)
+	{
+		initTimer(playbackFrequency);
+	}
+	
 	// Reset time counter and start playback!!
 	tickCounter = 0;
 	programState = 1;
@@ -602,7 +614,7 @@ void setConfig(void)
 	char configLineBuffer[80];	// Buffer of a config line.  I picked 80 chars cause... uh... DOS
 	// Try to load the settings file
 	configFilePointer = fopen(settings.filePath,"rt");
-	if (!configFilePointer)
+	if (configFilePointer == NULL)
 	{
 		// If there's no config file, just give up.  Defaults have already been set.
 		return;
@@ -685,7 +697,7 @@ void playlistGet(uint32_t songNumber)
 	{
 		if (i == songNumber)
 		{	
-			vgmFileName = playlistLineBuffer;
+			vgmFileName = strtok(playlistLineBuffer, "\n");
 			break;
 		}
 		else
@@ -1923,8 +1935,9 @@ int loadVGM(void)
 	int i;
 
 	// Try to load the VGM
+	errno = 0;
 	vgmFilePointer = fopen(vgmFileName,"rb");
-	if (!vgmFilePointer)
+	if (vgmFilePointer == NULL)
 	{
 		killProgram(10);
 	}
@@ -1945,8 +1958,9 @@ int loadVGM(void)
 		printf("Compressed file detected - decompressing...\n");
 		// Reopen the file with zlib
 		fclose(vgmFilePointer);
+		errno = 0;
 		compressedFile = gzopen(vgmFileName,"rb");
-		if (!compressedFile)
+		if (compressedFile == NULL)
 		{
 			killProgram(11);
 		}
@@ -1980,8 +1994,9 @@ int loadVGM(void)
 		fflush(vgmFilePointer);
 		fsync(fileno(vgmFilePointer));
 		fclose(vgmFilePointer);
+		errno = 0;
 		vgmFilePointer = fopen(settings.tempPath,"rb");
-		if (!vgmFilePointer)
+		if (vgmFilePointer == NULL)
 		{
 			killProgram(12);
 		}
@@ -3080,15 +3095,23 @@ void killProgram(int errorCode)
 			break;
 		case 9:
 			printf("Load error in playlist handler!\n");
+			printf("%s", fileName);
+			perror("");
 			break;
 		case 10:
 			printf("Load error in VGM handler!\n");
+			printf("%s", vgmFileName);
+			perror("");
 			break;
 		case 11:
 			printf("Load error in decompression handler!\n");
+			printf("%s", vgmFileName);
+			perror("");
 			break;
 		case 12:
 			printf("Load error in tempfile handler!\n");
+			printf("%s", settings.tempPath);
+			perror("");
 			break;
 	}
 	exit(errorCode);
