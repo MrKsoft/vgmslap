@@ -45,7 +45,7 @@ typedef unsigned long uint32_t;
 // Defines and function prototypes
 ///////////////////////////////////////////////////////////////////////////////
 
-#define VGMSLAP_VERSION "R1"
+#define VGMSLAP_VERSION "R2-pre"
 
 // Macro definitions
 
@@ -410,6 +410,7 @@ int main(int argc, char** argv)
 			// If time to draw a new frame, collect data
 			if (requestScreenDraw == 0)
 			{
+				// Calculate new values from OPL registers
 				interpretOPL();
 				requestScreenDraw = 1;
 			}
@@ -428,7 +429,7 @@ int main(int argc, char** argv)
 				if (requestScreenDraw > 0)
 				{
 					drawScreen();
-					if (requestScreenDraw > 9)
+					if (requestScreenDraw > 11)
 					{
 						requestScreenDraw = 0;
 					}
@@ -776,9 +777,6 @@ void drawScreen(void)
 	int tempAttribute = 0x0;
 	int channelLineOffset;
 	
-	// Calculate new values from OPL registers
-	//interpretOPL();
-	
 	// PHASE 1
 	
 	if (requestScreenDraw == 1)
@@ -1080,7 +1078,15 @@ void drawScreen(void)
 			{
 				drawStringAtPosition(oplFeedbackNames[oplStatus.channels[i].feedback],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[i].displayY+2,0x0E);
 			}
-			
+		}
+	}
+	
+	// PHASE 8
+	
+	if (requestScreenDraw == 8)
+	{
+		for (i=0; i<maxChannels; i++)
+		{	
 			// Set what color to draw the Note icon with based on whether Key-On is set.
 			if (oplStatus.channels[i].keyOn == 1)
 			{
@@ -1114,9 +1120,9 @@ void drawScreen(void)
 		}
 	}
 	
-	// PHASE 8
+	// PHASE 9
 	
-	if (requestScreenDraw == 8)
+	if (requestScreenDraw == 9)
 	{
 		// Panning - only with OPL3
 		for (i=0; i<maxChannels; i++)
@@ -1199,9 +1205,9 @@ void drawScreen(void)
 		}
 	}
 	
-	// PHASE 9
+	// PHASE 10
 	
-	if (requestScreenDraw == 9)
+	if (requestScreenDraw == 10)
 	{
 		// Panning - only with OPL3
 		for (i=0; i<maxChannels; i++)
@@ -1242,7 +1248,15 @@ void drawScreen(void)
 				sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[i].frequencyNumber);
 				drawStringAtPosition(txtDrawBuffer,oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+2,0x0E);
 			}
-			
+		}
+	}
+	
+	// PHASE 11
+	
+	if (requestScreenDraw == 11)
+	{
+		for (i=0; i<maxChannels; i++)
+		{
 			// Channel headers (for 2/4op switchable)
 			if (i < 3 || (i > 5 && i < 12) || i > 14)
 			{
@@ -1810,27 +1824,27 @@ void interpretOPL(void)
 	// OPL3 Mode / "New bit"
 	oplStatus.flagOPL3Mode = (oplRegisterMap[0x105] & 0x01);
 	
-	for (i=0; i<18; i++)
+	// 4-op flags are global to the chip, in the upper register set.
+	oplStatus.channels[0].flag4Op = oplRegisterMap[0x104] & 0x01;
+	oplStatus.channels[3].flag4Op = oplRegisterMap[0x104] & 0x01;
+	oplStatus.channels[1].flag4Op = oplRegisterMap[0x104] & 0x02 >> 1;
+	oplStatus.channels[4].flag4Op = oplRegisterMap[0x104] & 0x02 >> 1;
+	oplStatus.channels[2].flag4Op = oplRegisterMap[0x104] & 0x04 >> 2;
+	oplStatus.channels[5].flag4Op = oplRegisterMap[0x104] & 0x04 >> 2;
+	oplStatus.channels[9].flag4Op = oplRegisterMap[0x104] & 0x08 >> 3;
+	oplStatus.channels[12].flag4Op = oplRegisterMap[0x104] & 0x08 >> 3;
+	oplStatus.channels[10].flag4Op = oplRegisterMap[0x104] & 0x10 >> 4;
+	oplStatus.channels[13].flag4Op = oplRegisterMap[0x104] & 0x10 >> 4;
+	oplStatus.channels[11].flag4Op = oplRegisterMap[0x104] & 0x20 >> 5;
+	oplStatus.channels[14].flag4Op = oplRegisterMap[0x104] & 0x20 >> 5;
+	
+	for (i=0; i < maxChannels; i++)
 	{
 		// Precalculate operators of channel
 		// Since this value is needed a bunch of times, this means less adding / multiplying (18x2=36 total per function call instead of 18x24=432!)
 		// Every pointless optimization counts!  Tbh, it helps readability too.
 		targetOp1 = i*2;
 		targetOp2 = targetOp1+1;
-		
-		// 4-op flags are global to the chip, in the upper register set.
-		oplStatus.channels[0].flag4Op = oplRegisterMap[0x104] & 0x01;
-		oplStatus.channels[3].flag4Op = oplRegisterMap[0x104] & 0x01;
-		oplStatus.channels[1].flag4Op = oplRegisterMap[0x104] & 0x02 >> 1;
-		oplStatus.channels[4].flag4Op = oplRegisterMap[0x104] & 0x02 >> 1;
-		oplStatus.channels[2].flag4Op = oplRegisterMap[0x104] & 0x04 >> 2;
-		oplStatus.channels[5].flag4Op = oplRegisterMap[0x104] & 0x04 >> 2;
-		oplStatus.channels[9].flag4Op = oplRegisterMap[0x104] & 0x08 >> 3;
-		oplStatus.channels[12].flag4Op = oplRegisterMap[0x104] & 0x08 >> 3;
-		oplStatus.channels[10].flag4Op = oplRegisterMap[0x104] & 0x10 >> 4;
-		oplStatus.channels[13].flag4Op = oplRegisterMap[0x104] & 0x10 >> 4;
-		oplStatus.channels[11].flag4Op = oplRegisterMap[0x104] & 0x20 >> 5;
-		oplStatus.channels[14].flag4Op = oplRegisterMap[0x104] & 0x20 >> 5;
 		
 		// For channel level lookups, we don't use the precalculated offsets like the operators.  Instead we can just add 0x100 to the register number, and subtract 9 from the channel number, when looking at OPL3 channels.
 		if (i < 9)
