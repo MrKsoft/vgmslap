@@ -1736,7 +1736,7 @@ void writeOPL(unsigned int reg, unsigned char data)
 			// The OPL2 requires a minimum time between writes.  We can execute inp a certain number of times to ensure enough time has passed - why does that work?  Because the time it takes to complete an inp is based on the ISA bus timings!
 			while (registerDelay--)
 			{
-				inp(oplBaseAddr);
+				inp(0x80);
 			}
 			
 			// ...then go to +1 for the data
@@ -1744,7 +1744,7 @@ void writeOPL(unsigned int reg, unsigned char data)
 			// Data register write delay.
 			while (dataDelay--)
 			{
-				inp(oplBaseAddr);
+				inp(0x80);
 			}
 		}
 		// OPL2 and/or OPL3 primary register set
@@ -1756,7 +1756,7 @@ void writeOPL(unsigned int reg, unsigned char data)
 			// The OPL2 requires a minimum time between writes.  We can execute inp a certain number of times to ensure enough time has passed - why does that work?  Because the time it takes to complete an inp is based on the ISA bus timings!
 			while (registerDelay--)
 			{
-				inp(oplBaseAddr);
+				inp(0x80);
 			}
 			
 			// ...then go to Base+1 for the data
@@ -1764,7 +1764,7 @@ void writeOPL(unsigned int reg, unsigned char data)
 			// Data register write delay.
 			while (dataDelay--)
 			{
-				inp(oplBaseAddr);
+				inp(0x80);
 			}
 		}
 		
@@ -1902,8 +1902,8 @@ void resetOPL(void)
 // Detect what OPL chip is in the computer.  This determines what VGMs can be played.
 void detectOPL(void)
 {
-	int statusRegisterResult1;
-	int statusRegisterResult2;
+	uint8_t statusRegisterResult1;
+	uint8_t statusRegisterResult2;
 	
 	// Start with assuming nothing is detected
 	detectedChip = 0;
@@ -1920,8 +1920,8 @@ void detectOPL(void)
 	writeOPL(0x02, 0xFF);
 	// Unmask and start timer 1
 	writeOPL(0x04, 0x21);
-	// Wait at least 80 usec (0.08ms) - a 1ms delay should be enough
-	delay(1);
+	// Wait at least 80 usec (0.08ms) - a 2ms delay should be enough
+	delay(2);
 	// Read status register
 	statusRegisterResult2 = inp(oplBaseAddr);
 	// Reset timer 1, timer 2, and IRQ again
@@ -1933,7 +1933,7 @@ void detectOPL(void)
 		// OPL2 detected
 		detectedChip = 1;
 		// Continue to try detecting OPL3
-		if ((inp(oplBaseAddr) & 0x06) == 0x00)
+		if ((statusRegisterResult2 & 0x06) == 0x00)
 		{
 			detectedChip = 3;
 		}
