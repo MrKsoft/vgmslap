@@ -722,6 +722,10 @@ void initTimer(uint16_t frequency)
 	// 43h = Command to set a channel's mode of operation
 	// 36h = Command data:
 	//       0 0 1 1 0 1 1 0
+	//       └┬┘ └┬┘ └─┬─┘ └─► Process count as binary
+	//        │   │    └─────► Mode 3: square-wave rate generator
+	//        │   └──────────► Read/load LSB then MSB
+	//        └──────────────► Select counter #0
 	outp(0x43, 0x36);
 	// 40h = Frequency divider for counter #0
 	outp(0x40, fastTickRate & 0xFF); // Low byte
