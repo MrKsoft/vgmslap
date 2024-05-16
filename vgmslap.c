@@ -2882,7 +2882,8 @@ int getNextCommandData(void)
 			}
 	}
 	// Based on whatever the last wait value was, set what sample we "should" be on.
-	dataCurrentSample = dataCurrentSample + (currentWait + 1);
+	// There can be multiple commands per sample, so this won't advance the sample counter in that case.
+	dataCurrentSample = dataCurrentSample + currentWait;
 	// Successful, return good status
 	return 0;
 }
