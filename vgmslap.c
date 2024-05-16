@@ -1964,13 +1964,13 @@ void detectOPL(void)
 			killProgram(7);
 			break;
 		case 1:
-			oplDelayReg = 35;
-			oplDelayData = 6;
+			oplDelayReg = 6;
+			oplDelayData = 35;
 			printf("OPL2 detected at %Xh!\n", settings.oplBase);
 			break;
 		case 2:
-			oplDelayReg = 35;
-			oplDelayData = 6;
+			oplDelayReg = 6;
+			oplDelayData = 35;
 			printf("Dual OPL2 detected at %Xh!\n", settings.oplBase);
 			break;
 		case 3:
