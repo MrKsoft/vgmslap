@@ -61,11 +61,11 @@ typedef unsigned long uint32_t;
 void clearTextScreen(void);
 void clearInterface(void);
 void setVideoMode(int);
-void drawScreen(void);
 void drawTextUI(void);
 void drawCharacterAtPosition(unsigned char, unsigned char, unsigned char, unsigned char);
 void drawStringAtPosition(char*, unsigned char, unsigned char, unsigned char);
 void drawGraphicAtPosition(const int*, unsigned char, unsigned char, unsigned char, unsigned char);
+void drawChannelTable(void);
 
 // Playlist functions
 void countPlaylistSongs(void);
@@ -77,7 +77,6 @@ void initPlayback(void);
 void detectOPL(void);
 void writeOPL(unsigned int, unsigned char);
 void resetOPL(void);
-void interpretOPL(void);
 
 // Timing functions
 void interrupt timerHandler(void);
@@ -89,7 +88,7 @@ int getNextCommandData(void);
 wchar_t* getNextGd3String(void);
 int loadVGM(void);
 void populateCurrentGd3(void);
-int processCommands(void);
+void processCommands(void);
 
 // Other functions
 void inputHandler(void);
@@ -119,6 +118,7 @@ char txtDrawBuffer[80];							// Temporary buffer line for text display
 char far *textScreen = (char far *)0xB8000000; 	// VGA text screen memory location
 char numToHex[] = "0123456789ABCDEF"; 			// For quick num > hex conversion
 char textRows = 25;								// Number of rows in text mode
+uint16_t displayRegisterMax = 0xFF;				// How many registers to iterate for screen refresh
 
 // File-related vars
 unsigned char vgmIdentifier[] = "Vgm ";	// VGM magic number
@@ -144,6 +144,7 @@ uint8_t detectedChip;				// What OPL chip we detect on the system
 uint8_t oplDelayReg = 6;			// Delay required for OPL register write (set for OPL2 by default)
 uint8_t oplDelayData = 35;			// Delay required for OPL data write (set for OPL2 by default)
 char oplRegisterMap[0x1FF];			// Stores current state of OPL registers
+char oplChangeMap[0x1FF];			// Written alongside oplRegisterMap, tracks bytes that need interpreted/drawn
 uint8_t commandReg = 0; 			// Stores current OPL register to manipulate
 uint8_t commandData = 0; 			// Stores current data to put in OPL register
 uint8_t maxChannels = 9;			// When iterating channels, how many to go through (9 for OPL2, 18 for OPL3)
@@ -168,6 +169,15 @@ const int oplOperatorOrder[] = {
 	0x110, 0x113,  // Channel 16
 	0x111, 0x114,  // Channel 17
 	0x112, 0x115}; // Channel 18
+
+// Offsets from base of a register category (for instance Attack/Decay at 0x60) and how it maps to a channel/op.
+// OPL2 only, add 9 to channel number for OPL3
+const int oplOperatorToChannel[] = {
+0, 1, 2, 0, 1, 2, 0, 0, 3, 4, 5, 3, 4, 5, 0, 0, 6, 7, 8, 6, 7, 8
+};
+const int oplOffsetToOperator[] = {
+0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1
+};
 
 // Timing-related vars
 void interrupt (*biosISR8)(void);			// Pointer to the BIOS interrupt service routine 8
@@ -402,45 +412,29 @@ int main(int argc, char** argv)
 	while (programState > 0 && programState < 3)
 	{
 		// If programState > 0 then we are in the main logic loop.  Commands will be processed, input will be read, and the screen will be refreshed.
-		// Of course, processCommands will be nested more when we have actual playback control.
 		if (programState == 1)
 		{
 			processCommands();
-
-			// If time to draw a new frame, collect data
-			if (requestScreenDraw == 0)
-			{
-				// Calculate new values from OPL registers
-				interpretOPL();
-				requestScreenDraw = 1;
-			}
 			
 			// Press a key to quit
 			// Todo: How to force the keyboard to respond if the CPU is overloaded due to playing a busy VGM on underspecced hardware?  Keyboard interrupt is getting missed.  Also keypress gets passed to next program (command, file manager, etc) after quit.  Detect release before acting?
-			
 			inputHandler();
 			
 			// Refresh screen
-			// RequestScreenDraw goes through phases so we can write parts of the VGA memory separately
-			// This helps performance - writing it all at once lags on slow CPUs, and there's no need to complete a redraw faster than 70hz anyway.
-			// Todo: A more scientific way of splitting the workload and/or framedropping.
 			if (settings.struggleBus == 0)
 			{
 				if (requestScreenDraw > 0)
 				{
-					drawScreen();
-					if (requestScreenDraw > 11)
-					{
-						requestScreenDraw = 0;
-					}
-				}
+					drawChannelTable();
+				}		
 			}
 		}
+		// State 2 is "end of song"
 		else if (programState == 2)
 		{
 			// Reset OPL, force screen redraw to set things back to default state
 			resetOPL();
-			requestScreenDraw = 0;
+			drawChannelTable();
 			
 			// Free loaded file pointer
 			fclose(vgmFilePointer);
@@ -465,7 +459,6 @@ int main(int argc, char** argv)
 				
 					// Repeat load/init/play routines
 					initPlayback();
-					
 				}
 				else
 				{
@@ -473,7 +466,6 @@ int main(int argc, char** argv)
 					programState = 3;
 				}
 			}
-			
 		}
 	}
 	while (programState == 3)
@@ -593,6 +585,9 @@ void initPlayback(void)
 	{
 		writeOPL(0x105,0x01);
 	}
+	
+	// Draw initial OPL state
+	drawChannelTable();
 	
 	// Set interrupt timer if it hasn't already been done
 	if (fastTickRate == 0)
@@ -768,545 +763,700 @@ void interrupt timerHandler(void)
 // Display Functions
 ///////////////////////////////////////////////////////////////////////////////
 
-// Main screen drawing loop
-// Currently unreasonably slow because I'm doing this in the most dumbass ways possible.
-void drawScreen(void)
+// Reads OPL values, packs them into the structs, then draws the result to the screen
+// Only interprets and draws parts that change
+void drawChannelTable(void)
 {
-	int i = 0;
-	int j = 0;
+	int i;
+	int j;
+	int k;
+	int targetChannel;
+	int targetOperator;
 	int tempAttribute = 0x0;
-	int channelLineOffset;
 	
-	// PHASE 1
-	
-	if (requestScreenDraw == 1)
+	// Start at 0x20 as that is the lowest register we care about
+	for (i = 20; i <= displayRegisterMax; i++)
 	{
-		// Draw 2-op channel numbers & algos - has to be done here due to 4-op flags
-		// 2-op algo display
-		for (i=0; i<maxChannels; i++)
+		// Found a changed register
+		if (oplChangeMap[i] == 1)
 		{
-			if (oplStatus.channels[i].flag4Op != 1)
+			// What register changed?
+			
+			// Tremolo / Vibrato / Sustain / KSR Flags & Multiplier
+			if ((i >= 0x20 && i <= 0x35) || (i >= 0x120 && i <= 0x135))
 			{
-				sprintf(txtDrawBuffer, "Ch.%02d", i+1);
-				drawStringAtPosition(txtDrawBuffer, oplStatus.channels[i].displayX+2, oplStatus.channels[i].displayY, 0x0F);
-				drawStringAtPosition("\xCD\xCD\xCD", oplStatus.channels[i].displayX+36, oplStatus.channels[i].displayY, 0x08);
-				// FM Algorithm
-				if(oplStatus.channels[i].synthesisType == 0)
+				if (i >= 0x20 && i <= 0x35)
 				{
-					drawGraphicAtPosition(tgAlgoFM, 7, 3, oplStatus.channels[i].displayX+1, oplStatus.channels[i].displayY+1);
+					targetChannel = oplOperatorToChannel[(i - 0x20)];
+					targetOperator = oplOffsetToOperator[(i - 0x20)];
 				}
-				// AS Algorithm
-				else if (oplStatus.channels[i].synthesisType == 1)
+				else if (i >= 0x120 && i <= 0x135)
 				{
-					drawGraphicAtPosition(tgAlgoAS, 7, 3, oplStatus.channels[i].displayX+1, oplStatus.channels[i].displayY+1);
+					targetChannel = oplOperatorToChannel[(i - 0x120)] + 9;
+					targetOperator = oplOffsetToOperator[(i - 0x120)];
 				}
-			}	
-		}
-	}	
-
-	// PHASE 2
-	
-	if (requestScreenDraw == 2)
-	{
-		// 4-op algo display
-		for (i=0;i<3;i++)
-		{
-			if (oplStatus.channels[i].flag4Op == 1)
-			{
-				// Clean up previously written text from switching between 2/4op
-				drawStringAtPosition("   ",oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[i].displayY+2,0x00);
-				drawStringAtPosition("   ",oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[i].displayY+6,0x00);
-				drawStringAtPosition("   ",oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+1,0x00);
-				drawStringAtPosition("   ",oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+2,0x00);
-				drawStringAtPosition("   ",oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+6,0x00);
-				drawStringAtPosition("   ",oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+7,0x00);
 				
-				// FM+FM
-				if(oplStatus.channels[i].synthesisType == 0 && oplStatus.channels[i+3].synthesisType == 0 )
-				{
-					drawGraphicAtPosition(tgAlgoFMFM, 7, 7, oplStatus.channels[i+3].displayX+1, oplStatus.channels[i].displayY+1);
-				}
-				// AS+FM
-				else if(oplStatus.channels[i].synthesisType == 1 && oplStatus.channels[i+3].synthesisType == 0 )
-				{
-					drawGraphicAtPosition(tgAlgoASFM, 7, 7, oplStatus.channels[i].displayX+1, oplStatus.channels[i].displayY+1);
-				}
-				// FM+AS
-				else if(oplStatus.channels[i].synthesisType == 0 && oplStatus.channels[i+3].synthesisType == 1 )
-				{
-					drawGraphicAtPosition(tgAlgoFMAS, 7, 7, oplStatus.channels[i].displayX+1, oplStatus.channels[i].displayY+1);
-				}
-				// AS+AS
-				else if(oplStatus.channels[i].synthesisType == 1 && oplStatus.channels[i+3].synthesisType == 1 )
-				{
-					drawGraphicAtPosition(tgAlgoASAS, 7, 7, oplStatus.channels[i].displayX+1, oplStatus.channels[i].displayY+1);
-				}
-			}
-			
-		}
-	}
-
-	// PHASE 3
-	
-	if (requestScreenDraw == 3)
-	{
-		for (i=9;i<12;i++)
-		{
-			if (oplStatus.channels[i].flag4Op == 1)
-			{
-				// Clean up previously written text from switching between 2/4op
-				drawStringAtPosition("   ",oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[i].displayY+2,0x00);
-				drawStringAtPosition("   ",oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[i].displayY+6,0x00);
-				drawStringAtPosition("   ",oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+1,0x00);
-				drawStringAtPosition("   ",oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+2,0x00);
-				drawStringAtPosition("   ",oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+6,0x00);
-				drawStringAtPosition("   ",oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+7,0x00);
+				// Multiplier
+				oplStatus.channels[targetChannel].operators[targetOperator].frequencyMultiplierFactor = (oplRegisterMap[i] & 0x0F);
 				
-				// FM+FM
-				if(oplStatus.channels[i].synthesisType == 0 && oplStatus.channels[i+3].synthesisType == 0 )
+				// Tremolo
+				oplStatus.channels[targetChannel].operators[targetOperator].flagTremolo = ((oplRegisterMap[i] >> 7) & 0x01);
+				
+				// Vibrato
+				oplStatus.channels[targetChannel].operators[targetOperator].flagFrequencyVibrato = ((oplRegisterMap[i] >> 6) & 0x01);
+				
+				// Sustain
+				oplStatus.channels[targetChannel].operators[targetOperator].flagSoundSustaining = ((oplRegisterMap[i] >> 5) & 0x01);
+				
+				// KSR
+				oplStatus.channels[targetChannel].operators[targetOperator].flagKSR = ((oplRegisterMap[i] >> 4) & 0x01);
+				
+				if (targetOperator == 0)
 				{
-					drawGraphicAtPosition(tgAlgoFMFM, 7, 7, oplStatus.channels[i+3].displayX+1, oplStatus.channels[i].displayY+1);
-				}
-				// AS+FM
-				else if(oplStatus.channels[i].synthesisType == 1 && oplStatus.channels[i+3].synthesisType == 0 )
-				{
-					drawGraphicAtPosition(tgAlgoASFM, 7, 7, oplStatus.channels[i].displayX+1, oplStatus.channels[i].displayY+1);
-				}
-				// FM+AS
-				else if(oplStatus.channels[i].synthesisType == 0 && oplStatus.channels[i+3].synthesisType == 1 )
-				{
-					drawGraphicAtPosition(tgAlgoFMAS, 7, 7, oplStatus.channels[i].displayX+1, oplStatus.channels[i].displayY+1);
-				}
-				// AS+AS
-				else if(oplStatus.channels[i].synthesisType == 1 && oplStatus.channels[i+3].synthesisType == 1 )
-				{
-					drawGraphicAtPosition(tgAlgoASAS, 7, 7, oplStatus.channels[i].displayX+1, oplStatus.channels[i].displayY+1);
-				}
-			}
-			
-		}
-	}
-	
-	// PHASE 4
-	// Channel numbers for 4op channels
-	
-	if (requestScreenDraw == 4)
-	{
-		if (oplStatus.channels[0].flag4Op == 1)
-		{
-			drawStringAtPosition("01+04", oplStatus.channels[0].displayX+2, oplStatus.channels[0].displayY, 0x0F);
-			drawStringAtPosition("4OP", oplStatus.channels[0].displayX+36, oplStatus.channels[0].displayY, 0x0C);
-
-		}
-		if (oplStatus.channels[1].flag4Op == 1)
-		{
-			drawStringAtPosition("02+05", oplStatus.channels[1].displayX+2, oplStatus.channels[1].displayY, 0x0F);
-			drawStringAtPosition("4OP", oplStatus.channels[1].displayX+36, oplStatus.channels[1].displayY, 0x0C);
-		}
-		if (oplStatus.channels[2].flag4Op == 1)
-		{
-			drawStringAtPosition("03+06", oplStatus.channels[2].displayX+2, oplStatus.channels[2].displayY, 0x0F);
-			drawStringAtPosition("4OP", oplStatus.channels[2].displayX+36, oplStatus.channels[2].displayY, 0x0C);
-		}
-		if (oplStatus.channels[9].flag4Op == 1)
-		{
-			drawStringAtPosition("10+13", oplStatus.channels[9].displayX+2, oplStatus.channels[9].displayY, 0x0F);
-			drawStringAtPosition("4OP", oplStatus.channels[9].displayX+36, oplStatus.channels[9].displayY, 0x0C);
-		}
-		if (oplStatus.channels[10].flag4Op == 1)
-		{
-			drawStringAtPosition("11+14", oplStatus.channels[10].displayX+2, oplStatus.channels[10].displayY, 0x0F);
-			drawStringAtPosition("4OP", oplStatus.channels[10].displayX+36, oplStatus.channels[10].displayY, 0x0C);
-		}
-		if (oplStatus.channels[11].flag4Op == 1)
-		{
-			drawStringAtPosition("12+15", oplStatus.channels[11].displayX+2, oplStatus.channels[11].displayY, 0x0F);
-			drawStringAtPosition("4OP", oplStatus.channels[11].displayX+36, oplStatus.channels[11].displayY, 0x0C);
-		}
-	}
-	
-	// PHASE 5
-	
-	// Draw channel params
-	
-	if (requestScreenDraw == 5)
-	{
-		for (i=0; i<maxChannels; i++)
-		{
-			// Calculate offset from base for the channel line
-			channelLineOffset = i*2;
-			
-			// Attack rate
-			drawCharacterAtPosition(numToHex[oplStatus.channels[i].operators[0].attackRate],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+5,oplStatus.channels[i].displayY+1,0x0B);
-			drawCharacterAtPosition(numToHex[oplStatus.channels[i].operators[1].attackRate],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+5,oplStatus.channels[i].displayY+3,0x0A);
-			// Decay rate
-			drawCharacterAtPosition(numToHex[oplStatus.channels[i].operators[0].decayRate],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+6,oplStatus.channels[i].displayY+1,0x0B);
-			drawCharacterAtPosition(numToHex[oplStatus.channels[i].operators[1].decayRate],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+6,oplStatus.channels[i].displayY+3,0x0A);
-			// Sustain level
-			drawCharacterAtPosition(numToHex[oplStatus.channels[i].operators[0].sustainLevel],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+7,oplStatus.channels[i].displayY+1,0x0B);
-			drawCharacterAtPosition(numToHex[oplStatus.channels[i].operators[1].sustainLevel],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+7,oplStatus.channels[i].displayY+3,0x0A);
-			// Release rate
-			drawCharacterAtPosition(numToHex[oplStatus.channels[i].operators[0].releaseRate],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+8,oplStatus.channels[i].displayY+1,0x0B);
-			drawCharacterAtPosition(numToHex[oplStatus.channels[i].operators[1].releaseRate],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+8,oplStatus.channels[i].displayY+3,0x0A);
-			
-			// Waveform
-			drawStringAtPosition(oplWaveformNames[oplStatus.channels[i].operators[0].waveform],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS,oplStatus.channels[i].displayY+1,0x0B);
-			drawStringAtPosition(oplWaveformNames[oplStatus.channels[i].operators[1].waveform],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS,oplStatus.channels[i].displayY+3,0x0A);
-			
-			// Output level
-			sprintf(txtDrawBuffer, "%.2X", oplStatus.channels[i].operators[0].outputLevel);
-			drawStringAtPosition(txtDrawBuffer,oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+21,oplStatus.channels[i].displayY+1,0x0B);
-			sprintf(txtDrawBuffer, "%.2X", oplStatus.channels[i].operators[1].outputLevel);
-			drawStringAtPosition(txtDrawBuffer,oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+21,oplStatus.channels[i].displayY+3,0x0A);
-			
-			// Multiplier
-			drawStringAtPosition(oplMultiplierNames[oplStatus.channels[i].operators[0].frequencyMultiplierFactor],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+15,oplStatus.channels[i].displayY+1,0x0B);
-			drawStringAtPosition(oplMultiplierNames[oplStatus.channels[i].operators[1].frequencyMultiplierFactor],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+15,oplStatus.channels[i].displayY+3,0x0A);
-			
-			// Key Scaling Level
-			drawStringAtPosition(oplKSLNames[oplStatus.channels[i].operators[0].keyScaleLevel],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+17,oplStatus.channels[i].displayY+1,0x0B);
-			drawStringAtPosition(oplKSLNames[oplStatus.channels[i].operators[1].keyScaleLevel],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+17,oplStatus.channels[i].displayY+3,0x0A);	
-		}
-	}
-	
-	// PHASE 6
-	
-	if (requestScreenDraw == 6)
-	{
-		for (i=0; i<maxChannels; i++)
-		{
-			// Flags - Displayed as on/off toggles
-			
-			// Tremolo
-			if (oplStatus.channels[i].operators[0].flagTremolo == 1)
-			{
-				drawCharacterAtPosition(0x54, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[i].displayY+1, 0x07);
-			}
-			else
-			{
-				drawCharacterAtPosition(0x2D, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[i].displayY+1, 0x08);
-			}
-			if (oplStatus.channels[i].operators[1].flagTremolo == 1)
-			{
-				drawCharacterAtPosition(0x54, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[i].displayY+3, 0x07);
-			}
-			else
-			{
-				drawCharacterAtPosition(0x2D, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[i].displayY+3, 0x08);
-			}
-			
-			// Vibrato
-			if (oplStatus.channels[i].operators[0].flagFrequencyVibrato == 1)
-			{
-				drawCharacterAtPosition(0x56, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[i].displayY+1, 0x07);
-			}
-			else
-			{
-				drawCharacterAtPosition(0x2D, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[i].displayY+1, 0x08);
-			}
-			if (oplStatus.channels[i].operators[1].flagFrequencyVibrato == 1)
-			{
-				drawCharacterAtPosition(0x56, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[i].displayY+3, 0x07);
-			}
-			else
-			{
-				drawCharacterAtPosition(0x2D, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[i].displayY+3, 0x08);
-			}
-			
-			// Sustain
-			if (oplStatus.channels[i].operators[0].flagSoundSustaining == 1)
-			{
-				drawCharacterAtPosition(0x53, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[i].displayY+1, 0x07);
-			}
-			else
-			{
-				drawCharacterAtPosition(0x2D, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[i].displayY+1, 0x08);
-			}
-			if (oplStatus.channels[i].operators[1].flagSoundSustaining == 1)
-			{
-				drawCharacterAtPosition(0x53, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[i].displayY+3, 0x07);
-			}
-			else
-			{
-				drawCharacterAtPosition(0x2D, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[i].displayY+3, 0x08);
-			}
-			
-			// KSR
-			if (oplStatus.channels[i].operators[0].flagKSR == 1)
-			{
-				drawCharacterAtPosition(0x4B, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[i].displayY+1, 0x07);
-			}
-			else
-			{
-				drawCharacterAtPosition(0x2D, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[i].displayY+1, 0x08);
-			}
-			if (oplStatus.channels[i].operators[1].flagKSR == 1)
-			{
-				drawCharacterAtPosition(0x4B, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[i].displayY+3, 0x07);
-			}
-			else
-			{
-				drawCharacterAtPosition(0x2D, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[i].displayY+3, 0x08);
-			}
-		}
-	}
-	
-	// PHASE 7
-	
-	if (requestScreenDraw == 7)
-	{
-		for (i=0; i<maxChannels; i++)
-		{		
-			// Feedback
-			// Positioning for 4-op channels
-			if (i <= 5 || (i >= 9 && i <= 14))
-			{
-				if (oplStatus.channels[i].flag4Op == 1)
-				{
-					if (i <= 2 || (i >= 9 && i <= 11))
+					// Multiplier
+					drawStringAtPosition(oplMultiplierNames[oplStatus.channels[targetChannel].operators[targetOperator].frequencyMultiplierFactor],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+15,oplStatus.channels[targetChannel].displayY+1,0x0B);
+					
+					// Tremolo
+					if (oplStatus.channels[targetChannel].operators[targetOperator].flagTremolo == 1)
 					{
-					drawStringAtPosition(oplFeedbackNames[oplStatus.channels[i].feedback],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[i].displayY+4,0x0E);
+						drawCharacterAtPosition(0x54, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+1, 0x07);
+					}
+					else
+					{
+						drawCharacterAtPosition(0x54, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+1, 0x07);
+					}
+					
+					// Vibrato
+					if (oplStatus.channels[targetChannel].operators[targetOperator].flagFrequencyVibrato == 1)
+					{
+						drawCharacterAtPosition(0x56, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+1, 0x07);
+					}
+					else
+					{
+						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+1, 0x08);
+					}
+					
+					// Sustain
+					if (oplStatus.channels[targetChannel].operators[targetOperator].flagSoundSustaining == 1)
+					{
+						drawCharacterAtPosition(0x53, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+1, 0x07);
+					}
+					else
+					{
+						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+1, 0x08);
+					}
+					
+					// KSR
+					if (oplStatus.channels[targetChannel].operators[targetOperator].flagKSR == 1)
+					{
+						drawCharacterAtPosition(0x4B, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+1, 0x07);
+					}
+					else
+					{
+						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+1, 0x08);
 					}
 				}
-				else
+				else if (targetOperator == 1)
 				{
-					drawStringAtPosition(oplFeedbackNames[oplStatus.channels[i].feedback],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[i].displayY+2,0x0E);
-				}
-			}
-			// Positioning for 2-op channels
-			else
-			{
-				drawStringAtPosition(oplFeedbackNames[oplStatus.channels[i].feedback],oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[i].displayY+2,0x0E);
-			}
-		}
-	}
-	
-	// PHASE 8
-	
-	if (requestScreenDraw == 8)
-	{
-		for (i=0; i<maxChannels; i++)
-		{	
-			// Set what color to draw the Note icon with based on whether Key-On is set.
-			if (oplStatus.channels[i].keyOn == 1)
-			{
-				tempAttribute = 0x0D;
-			}
-			else
-			{
-				tempAttribute = 0x08;
-			}
-			
-			// Positioning for 4-op channels
-			if (i <= 5 || (i >= 9 && i <= 14))
-			{
-				if (oplStatus.channels[i].flag4Op == 1)
-				{
-					if (i <= 2 || (i >= 9 && i <= 11))
+					// Multiplier
+					drawStringAtPosition(oplMultiplierNames[oplStatus.channels[targetChannel].operators[targetOperator].frequencyMultiplierFactor],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+15,oplStatus.channels[targetChannel].displayY+3,0x0A);
+					
+					// Tremolo
+					if (oplStatus.channels[targetChannel].operators[targetOperator].flagTremolo == 1)
 					{
-					drawCharacterAtPosition(0x0E, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[i].displayY+5, tempAttribute);
+						drawCharacterAtPosition(0x54, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+3, 0x07);
+					}
+					else
+					{
+						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+3, 0x08);
+					}
+					
+					// Vibrato
+					if (oplStatus.channels[targetChannel].operators[targetOperator].flagFrequencyVibrato == 1)
+					{
+						drawCharacterAtPosition(0x56, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+3, 0x07);
+					}
+					else
+					{
+						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+3, 0x08);
+					}
+					
+					// Sustain
+					if (oplStatus.channels[targetChannel].operators[targetOperator].flagSoundSustaining == 1)
+					{
+						drawCharacterAtPosition(0x53, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+3, 0x07);
+					}
+					else
+					{
+						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+3, 0x08);
+					}
+					
+					// KSR
+					if (oplStatus.channels[targetChannel].operators[targetOperator].flagKSR == 1)
+					{
+						drawCharacterAtPosition(0x4B, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+3, 0x07);
+					}
+					else
+					{
+						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+3, 0x08);
 					}
 				}
-				else
+			}
+			
+			// KSL / Output Level
+			else if ((i >= 0x40 && i <= 0x55) || (i >= 0x140 && i <= 0x155))
+			{
+				if (i >= 0x40 && i <= 0x55)
 				{
-					drawCharacterAtPosition(0x0E, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[i].displayY+3, tempAttribute);
+					targetChannel = oplOperatorToChannel[(i - 0x40)];
+					targetOperator = oplOffsetToOperator[(i - 0x40)];
+				}
+				else if (i >= 0x140 && i <= 0x155)
+				{
+					targetChannel = oplOperatorToChannel[(i - 0x140)] + 9;
+					targetOperator = oplOffsetToOperator[(i - 0x140)];
+				}
+				
+				// Key Scaling Level
+				oplStatus.channels[targetChannel].operators[targetOperator].keyScaleLevel = (oplRegisterMap[i] >> 6);
+			
+				// Output level
+				oplStatus.channels[targetChannel].operators[targetOperator].outputLevel = (oplRegisterMap[i] & 0x3F);
+				
+				if (targetOperator == 0)
+				{
+					// Output level
+					sprintf(txtDrawBuffer, "%.2X", oplStatus.channels[targetChannel].operators[targetOperator].outputLevel);
+					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+21,oplStatus.channels[targetChannel].displayY+1,0x0B);
+					
+					// Key Scaling Level
+					drawStringAtPosition(oplKSLNames[oplStatus.channels[targetChannel].operators[targetOperator].keyScaleLevel],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+17,oplStatus.channels[targetChannel].displayY+1,0x0B);
+					
+				}
+				else if (targetOperator == 1)
+				{
+					// Output level
+					sprintf(txtDrawBuffer, "%.2X", oplStatus.channels[targetChannel].operators[targetOperator].outputLevel);
+					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+21,oplStatus.channels[targetChannel].displayY+3,0x0A);
+					
+					// Key Scaling Level
+					drawStringAtPosition(oplKSLNames[oplStatus.channels[targetChannel].operators[targetOperator].keyScaleLevel],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+17,oplStatus.channels[targetChannel].displayY+3,0x0A);
 				}
 			}
-			// Positioning for 2-op channels
-			else
+			
+			// Attack/Decay
+			else if ((i >= 0x60 && i <= 0x75) || (i >= 0x160 && i <= 0x175))
 			{
-				drawCharacterAtPosition(0x0E, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[i].displayY+3, tempAttribute);
-			}
-		}
-	}
-	
-	// PHASE 9
-	
-	if (requestScreenDraw == 9)
-	{
-		// Panning - only with OPL3
-		for (i=0; i<maxChannels; i++)
-		{	
-		
-			if (oplStatus.flagOPL3Mode != 0)
-			{
-				// Positioning for 4-op channels
-				if (i <= 5 || (i >= 9 && i <= 14))
+				if (i >= 0x60 && i <= 0x75)
 				{
-					if (oplStatus.channels[i].flag4Op == 1)
+					targetChannel = oplOperatorToChannel[(i - 0x60)];
+					targetOperator = oplOffsetToOperator[(i - 0x60)];
+				}
+				else if (i >= 0x160 && i <= 0x175)
+				{
+					targetChannel = oplOperatorToChannel[(i - 0x160)] + 9;
+					targetOperator = oplOffsetToOperator[(i - 0x160)];
+				}
+				
+				oplStatus.channels[targetChannel].operators[targetOperator].attackRate = (oplRegisterMap[i] >> 4);
+				oplStatus.channels[targetChannel].operators[targetOperator].decayRate = (oplRegisterMap[i] & 0x0F);
+				
+				if (targetOperator == 0)
+				{
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].attackRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+5,oplStatus.channels[targetChannel].displayY+1,0x0B);
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].decayRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+6,oplStatus.channels[targetChannel].displayY+1,0x0B);
+				}
+				else if (targetOperator == 1)
+				{
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].attackRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+5,oplStatus.channels[targetChannel].displayY+3,0x0A);
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].decayRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+6,oplStatus.channels[targetChannel].displayY+3,0x0A);
+				}
+			}
+			
+			// Sustain/Release
+			else if ((i >= 0x80 && i <= 0x95) || (i >= 0x180 && i <= 0x195))
+			{
+				if (i >= 0x80 && i <= 0x95)
+				{
+					targetChannel = oplOperatorToChannel[(i - 0x80)];
+					targetOperator = oplOffsetToOperator[(i - 0x80)];
+				}
+				else if (i >= 0x180 && i <= 0x195)
+				{
+					targetChannel = oplOperatorToChannel[(i - 0x180)] + 9;
+					targetOperator = oplOffsetToOperator[(i - 0x180)];
+				}
+				
+				oplStatus.channels[targetChannel].operators[targetOperator].sustainLevel = (oplRegisterMap[i] >> 4);
+				oplStatus.channels[targetChannel].operators[targetOperator].releaseRate = (oplRegisterMap[i] & 0x0F);
+				
+				if (targetOperator == 0)
+				{
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].sustainLevel],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+7,oplStatus.channels[targetChannel].displayY+1,0x0B);
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].releaseRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+8,oplStatus.channels[targetChannel].displayY+1,0x0B);
+				}
+				else if (targetOperator == 1)
+				{
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].sustainLevel],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+7,oplStatus.channels[targetChannel].displayY+3,0x0A);
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].releaseRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+8,oplStatus.channels[targetChannel].displayY+3,0x0A);
+				}
+			}
+			
+			// Frequency (Low)
+			
+			else if ((i >= 0xA0 && i <= 0xA8) || (i >= 0x1A0 && i <= 0x1A8))
+			{
+				if (i >= 0xA0 && i <= 0xA8)
+				{
+					targetChannel = i - 0xA0;
+				}
+				else if (i >= 0x1A0 && i <= 0x1A8)
+				{
+					targetChannel = (i - 0x1A0) + 9;
+				}
+				
+				oplStatus.channels[targetChannel].frequencyNumber = (oplRegisterMap[i]) + ((oplRegisterMap[i+0x10] & 0x03) << 8);
+				
+				// Entire frequency must be redrawn because it's split between bytes
+				if (targetChannel <= 5 || (targetChannel >= 9 && targetChannel <= 14))
+				{
+					if (oplStatus.channels[targetChannel].flag4Op == 1)
 					{
-						if (i <= 2 || (i >= 9 && i <= 11))
+						if (targetChannel <= 2 || (targetChannel >= 9 && targetChannel <= 11))
 						{
-							// Left
-							if ((oplStatus.channels[i].panning & 0x01) == 1)
-							{
-								drawCharacterAtPosition(0x28, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[i].displayY+5), 0xF);
-							}
-							else
-							{
-								drawCharacterAtPosition(0x28, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[i].displayY+5), 0x8);
-							}
-							// Right
-							if ((oplStatus.channels[i].panning & 0x02) == 2)
-							{
-								drawCharacterAtPosition(0x29, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[i].displayY+5), 0xF);						
-							}
-							else
-							{
-								drawCharacterAtPosition(0x29, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[i].displayY+5), 0x8);
-							}
+							// Frequency number
+							sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
+							drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+4,0x0E);
 						}
 					}
 					else
 					{
-						// Left
-						if ((oplStatus.channels[i].panning & 0x01) == 1)
-						{
-							drawCharacterAtPosition(0x28, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[i].displayY+3), 0xF);		
-						}
-						else
-						{
-							drawCharacterAtPosition(0x28, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[i].displayY+3), 0x8);
-						}
-						// Right
-						if ((oplStatus.channels[i].panning & 0x02) == 2)
-						{
-							drawCharacterAtPosition(0x29, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[i].displayY+3), 0xF);		
-						}
-						else
-						{
-							drawCharacterAtPosition(0x29, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[i].displayY+3), 0x8);
-						}
+						// Frequency number
+						sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
+						drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,0x0E);
 					}
 				}
 				// Positioning for 2-op channels
 				else
 				{
-					// Left
-					if ((oplStatus.channels[i].panning & 0x01) == 1)
-					{
-						drawCharacterAtPosition(0x28, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[i].displayY+3), 0xF);		
-					}
-					else
-					{
-						drawCharacterAtPosition(0x28, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[i].displayY+3), 0x8);
-					}
-					// Right
-					if ((oplStatus.channels[i].panning & 0x02) == 2)
-					{
-						drawCharacterAtPosition(0x29, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[i].displayY+3), 0xF);		
-					}
-					else
-					{
-						drawCharacterAtPosition(0x29, oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[i].displayY+3), 0x8);
-					}
+					// Frequency number
+					sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
+					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,0x0E);
 				}
 			}
-		}
-	}
-	
-	// PHASE 10
-	
-	if (requestScreenDraw == 10)
-	{
-		// Panning - only with OPL3
-		for (i=0; i<maxChannels; i++)
-		{	
-			// Note block / frequency - to be replaced later with note name+bend?
-			// Positioning for 4-op channels
-			if (i <= 5 || (i >= 9 && i <= 14))
+			
+			// Key-On, Block, Frequency (High)
+			
+			else if ((i >= 0xB0 && i <= 0xB8) || (i >= 0x1B0 && i <= 0x1B8))
 			{
-				if (oplStatus.channels[i].flag4Op == 1)
+				if (i >= 0xB0 && i <= 0xB8)
 				{
-					if (i <= 2 || (i >= 9 && i <= 11))
-					{
-						// Block number
-						sprintf(txtDrawBuffer, " %X ", oplStatus.channels[i].blockNumber);
-						drawStringAtPosition(txtDrawBuffer,oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+3,0x06);
-						// Frequency number
-						sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[i].frequencyNumber);
-						drawStringAtPosition(txtDrawBuffer,oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+4,0x0E);
-					}
+					targetChannel = i - 0xB0;
+				}
+				else if (i >= 0x1B0 && i <= 0x1B8)
+				{
+					targetChannel = (i - 0x1B0) + 9;
+				}
+				
+				// Frequency (High)
+				oplStatus.channels[targetChannel].frequencyNumber = (oplRegisterMap[i-0x10]) + ((oplRegisterMap[i] & 0x03) << 8);
+				
+				// Block number
+				oplStatus.channels[targetChannel].blockNumber = ((oplRegisterMap[i] >> 2) & 0x07);
+				
+				// Key on
+				oplStatus.channels[targetChannel].keyOn = ((oplRegisterMap[i] >> 5) & 0x01);
+				// Set what color to draw the Note icon with based on whether Key-On was set.
+				if (oplStatus.channels[targetChannel].keyOn == 1)
+				{
+					tempAttribute = 0x0D;
 				}
 				else
 				{
-				// Block number
-				sprintf(txtDrawBuffer, " %X ", oplStatus.channels[i].blockNumber);
-				drawStringAtPosition(txtDrawBuffer,oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+1,0x06);
-				// Frequency number
-				sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[i].frequencyNumber);
-				drawStringAtPosition(txtDrawBuffer,oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+2,0x0E);
-				}
-			}
-			// Positioning for 2-op channels
-			else
-			{
-				// Block number
-				sprintf(txtDrawBuffer, " %X ", oplStatus.channels[i].blockNumber);
-				drawStringAtPosition(txtDrawBuffer,oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+1,0x06);
-				// Frequency number
-				sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[i].frequencyNumber);
-				drawStringAtPosition(txtDrawBuffer,oplStatus.channels[i].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[i].displayY+2,0x0E);
-			}
-		}
-	}
-	
-	// PHASE 11
-	
-	if (requestScreenDraw == 11)
-	{
-		for (i=0; i<maxChannels; i++)
-		{
-			// Channel headers (for 2/4op switchable)
-			if (i < 3 || (i > 5 && i < 12) || i > 14)
-			{
-				for (j=1; j<36; j++)
-				{
-					if ( j<2 || j>6 )
-					{
-						drawCharacterAtPosition(0xCD, oplStatus.channels[i].displayX+j, oplStatus.channels[i].displayY, 0x08);
-					}
-				}
-				drawCharacterAtPosition(0xD5, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY, 0x08);
-				drawCharacterAtPosition(0xB8, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY, 0x08);
-				// Clear extra characters that may have been left behind in 2-op mode
-				if (oplStatus.channels[i].flag4Op == 1)
-				{
-					drawCharacterAtPosition(0xB3, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY+4, 0x08);
-					drawCharacterAtPosition(0xB3, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY+4, 0x08);
-					for (j=8; j<33; j++)
-					{
-						drawCharacterAtPosition(0x20, oplStatus.channels[i].displayX+j, oplStatus.channels[i].displayY+4, 0x08);
-					}
-					drawCharacterAtPosition(0x20, oplStatus.channels[i].displayX+35, oplStatus.channels[i].displayY+4, 0x08);
+					tempAttribute = 0x08;
 				}
 				
-			}
-			// Channel headers (2op-only)
-			else
-			{
-				if (oplStatus.channels[i].flag4Op == 0)
+				// Draw
+				// Entire frequency must be redrawn because it's split between bytes
+				
+				if (targetChannel <= 5 || (targetChannel >= 9 && targetChannel <= 14))
 				{
-					for (j=1; j<36; j++)
+					if (oplStatus.channels[targetChannel].flag4Op == 1)
 					{
-						if ( j<2 || j>6 )
+						if (targetChannel <= 2 || (targetChannel >= 9 && targetChannel <= 11))
 						{
-							drawCharacterAtPosition(0xCD, oplStatus.channels[i].displayX+j, oplStatus.channels[i].displayY, 0x08);
+							// Block number
+							sprintf(txtDrawBuffer, " %X ", oplStatus.channels[targetChannel].blockNumber);
+							drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+3,0x06);
+							// Frequency number
+							sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
+							drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+4,0x0E);
+							// Key on
+							drawCharacterAtPosition(0x0E, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+5, tempAttribute);
 						}
 					}
-					drawCharacterAtPosition(0xD5, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY, 0x08);
-					drawCharacterAtPosition(0xB8, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY, 0x08);
+					else
+					{
+						// Block number
+						sprintf(txtDrawBuffer, " %X ", oplStatus.channels[targetChannel].blockNumber);
+						drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+1,0x06);
+						// Frequency number
+						sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
+						drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,0x0E);
+						// Key on
+						drawCharacterAtPosition(0x0E, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute);
+					}
+				}
+				// Positioning for 2-op channels
+				else
+				{
+					// Block number
+					sprintf(txtDrawBuffer, " %X ", oplStatus.channels[targetChannel].blockNumber);
+					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+1,0x06);
+					// Frequency number
+					sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
+					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,0x0E);
+					// Key on
+					drawCharacterAtPosition(0x0E, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute);
 				}
 			}
-		}
+			
+			// Panning, Feedback, Algorithm
+			else if ((i >= 0xC0 && i <= 0xC8) || (i >= 0x1C0 && i <= 0x1C8))
+			{
+				if (i >= 0xC0 && i <= 0xC8)
+				{
+					targetChannel = i - 0xC0;
+				}
+				else if (i >= 0x1C0 && i <= 0x1C8)
+				{
+					targetChannel = (i - 0x1C0) + 9;
+				}
+				
+				// Panning
+				oplStatus.channels[targetChannel].panning = ((oplRegisterMap[i] >> 4) & 0x03);
+			
+				// Algorithm type
+				oplStatus.channels[targetChannel].synthesisType = ((oplRegisterMap[i]) & 0x01);
+			
+				// Feedback
+				oplStatus.channels[targetChannel].feedback = ((oplRegisterMap[i] >> 1) & 0x07);
+				
+				// Draw Panning (only if the OPL3 is turned on, or playing DualOPL2)
+				if (oplStatus.flagOPL3Mode != 0 || vgmChipType == 5)
+				{
+					if (oplStatus.channels[targetChannel].flag4Op == 0)
+					{
+						// Left
+						if ((oplStatus.channels[targetChannel].panning & 0x01) == 1)
+						{
+							drawCharacterAtPosition(0x28, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+3), 0xF);		
+						}
+						else
+						{
+							drawCharacterAtPosition(0x28, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+3), 0x8);
+						}
+						// Right
+						if ((oplStatus.channels[targetChannel].panning & 0x02) == 2)
+						{
+							drawCharacterAtPosition(0x29, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+3), 0xF);		
+						}
+						else
+						{
+							drawCharacterAtPosition(0x29, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+3), 0x8);
+						}
+					}
+					else if (oplStatus.channels[targetChannel].flag4Op != 0)
+					{
+						// Positioning for 4-op channels
+						if (targetChannel <= 2 || (targetChannel >= 9 && targetChannel <= 11))
+						{
+							// Left
+							if ((oplStatus.channels[targetChannel].panning & 0x01) == 1)
+							{
+								drawCharacterAtPosition(0x28, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+5), 0xF);
+							}
+							else
+							{
+								drawCharacterAtPosition(0x28, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+5), 0x8);
+							}
+							// Right
+							if ((oplStatus.channels[targetChannel].panning & 0x02) == 2)
+							{
+								drawCharacterAtPosition(0x29, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+5), 0xF);						
+							}
+							else
+							{
+								drawCharacterAtPosition(0x29, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+5), 0x8);
+							}
+						}
+					}
+				}
+				
+				// Draw Algorithm type
+				if (oplStatus.channels[targetChannel].flag4Op == 0)
+				{
+					// FM Algorithm
+					if(oplStatus.channels[targetChannel].synthesisType == 0)
+					{
+						drawGraphicAtPosition(tgAlgoFM, 7, 3, oplStatus.channels[targetChannel].displayX+1, oplStatus.channels[targetChannel].displayY+1);
+					}
+					// AS Algorithm
+					else if (oplStatus.channels[targetChannel].synthesisType == 1)
+					{
+						drawGraphicAtPosition(tgAlgoAS, 7, 3, oplStatus.channels[targetChannel].displayX+1, oplStatus.channels[targetChannel].displayY+1);
+					}
+				}
+				else if (oplStatus.channels[targetChannel].flag4Op != 0)
+				{
+					// Only do this if we are on the first channel of the 4-op pairing
+					if ((targetChannel >= 0 && targetChannel <=2) || (targetChannel >=9 && targetChannel <=11))
+					{
+						// Clean up previously written text from switching between 2/4op
+						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[targetChannel].displayY+2,0x00);
+						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[targetChannel].displayY+6,0x00);
+						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+1,0x00);
+						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,0x00);
+						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+6,0x00);
+						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+7,0x00);
+						
+						// FM+FM
+						if(oplStatus.channels[targetChannel].synthesisType == 0 && oplStatus.channels[targetChannel+3].synthesisType == 0 )
+						{
+							drawGraphicAtPosition(tgAlgoFMFM, 7, 7, oplStatus.channels[targetChannel+3].displayX+1, oplStatus.channels[targetChannel].displayY+1);
+						}
+						// AS+FM
+						else if(oplStatus.channels[targetChannel].synthesisType == 1 && oplStatus.channels[targetChannel+3].synthesisType == 0 )
+						{
+							drawGraphicAtPosition(tgAlgoASFM, 7, 7, oplStatus.channels[targetChannel].displayX+1, oplStatus.channels[targetChannel].displayY+1);
+						}
+						// FM+AS
+						else if(oplStatus.channels[targetChannel].synthesisType == 0 && oplStatus.channels[targetChannel+3].synthesisType == 1 )
+						{
+							drawGraphicAtPosition(tgAlgoFMAS, 7, 7, oplStatus.channels[targetChannel].displayX+1, oplStatus.channels[targetChannel].displayY+1);
+						}
+						// AS+AS
+						else if(oplStatus.channels[targetChannel].synthesisType == 1 && oplStatus.channels[targetChannel+3].synthesisType == 1 )
+						{
+							drawGraphicAtPosition(tgAlgoASAS, 7, 7, oplStatus.channels[targetChannel].displayX+1, oplStatus.channels[targetChannel].displayY+1);
+						}
+					}
+				}
+				
+				// Draw Feedback
+				if (oplStatus.channels[targetChannel].flag4Op == 0)
+				{
+					drawStringAtPosition(oplFeedbackNames[oplStatus.channels[targetChannel].feedback],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[targetChannel].displayY+2,0x0E);	
+					
+				}
+				else if (oplStatus.channels[targetChannel].flag4Op != 0)
+				{
+					if (targetChannel <= 2 || (targetChannel >= 9 && targetChannel <= 11))
+					{
+					drawStringAtPosition(oplFeedbackNames[oplStatus.channels[targetChannel].feedback],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[targetChannel].displayY+4,0x0E);
+					}
+				}
+			}
+			
+			// Waveform Select
+			else if ((i >= 0xE0 && i <= 0xF5) || (i >= 0x1E0 && i <= 0x1F5))
+			{
+				if (i >= 0xE0 && i <= 0xF5)
+				{
+					targetChannel = oplOperatorToChannel[(i - 0xE0)];
+					targetOperator = oplOffsetToOperator[(i - 0xE0)];
+				}
+				else if (i >= 0x1E0 && i <= 0x1F5)
+				{
+					targetChannel = oplOperatorToChannel[(i - 0x1E0)] + 9;
+					targetOperator = oplOffsetToOperator[(i - 0x1E0)];
+				}
+				
+				// If OPL2, ignore the highest bit as those waveforms can't be used
+				if (oplStatus.flagOPL3Mode == 0)
+				{
+					oplStatus.channels[targetChannel].operators[targetOperator].waveform = (oplRegisterMap[i] & 0x03);
+				}
+				else
+				{
+					oplStatus.channels[targetChannel].operators[targetOperator].waveform = (oplRegisterMap[i] & 0x07);
+				}
+				
+				if (targetOperator == 0)
+				{
+					drawStringAtPosition(oplWaveformNames[oplStatus.channels[targetChannel].operators[targetOperator].waveform],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS,oplStatus.channels[targetChannel].displayY+1,0x0B);
+				}
+				else if (targetOperator == 1)
+				{
+					drawStringAtPosition(oplWaveformNames[oplStatus.channels[targetChannel].operators[targetOperator].waveform],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS,oplStatus.channels[targetChannel].displayY+3,0x0A);
+				}
+			}
+			
+			// OPL3 4-op flags
+			else if (i == 0x104)
+			{
+				oplStatus.channels[0].flag4Op = oplRegisterMap[0x104] & 0x01;
+				oplStatus.channels[3].flag4Op = oplRegisterMap[0x104] & 0x01;
+				oplStatus.channels[1].flag4Op = oplRegisterMap[0x104] & 0x02 >> 1;
+				oplStatus.channels[4].flag4Op = oplRegisterMap[0x104] & 0x02 >> 1;
+				oplStatus.channels[2].flag4Op = oplRegisterMap[0x104] & 0x04 >> 2;
+				oplStatus.channels[5].flag4Op = oplRegisterMap[0x104] & 0x04 >> 2;
+				oplStatus.channels[9].flag4Op = oplRegisterMap[0x104] & 0x08 >> 3;
+				oplStatus.channels[12].flag4Op = oplRegisterMap[0x104] & 0x08 >> 3;
+				oplStatus.channels[10].flag4Op = oplRegisterMap[0x104] & 0x10 >> 4;
+				oplStatus.channels[13].flag4Op = oplRegisterMap[0x104] & 0x10 >> 4;
+				oplStatus.channels[11].flag4Op = oplRegisterMap[0x104] & 0x20 >> 5;
+				oplStatus.channels[14].flag4Op = oplRegisterMap[0x104] & 0x20 >> 5;
+				
+				// After changing 4-op flags, force redraw of things that may need repositioning or changed
+				// (Only on the first channel of each 4-op pair)
+				
+				// 0xAx Frequency (Low)
+				// 0xBx Key-On / Block / Frequency (High)
+				// 0xCx Algorithm / Feedback / Panning
+				for (j = 0x00; j <= 0x02; j++)
+				{
+					oplChangeMap[0xA0+j] = 1;
+					oplChangeMap[0xB0+j] = 1;
+					oplChangeMap[0xC0+j] = 1;
+				}
+				for (j = 0x00; j <= 0x02; j++)
+				{
+					oplChangeMap[0x1A0+j] = 1;
+					oplChangeMap[0x1B0+j] = 1;
+					oplChangeMap[0x1C0+j] = 1;
+				}
+				
+				// Channel names
+				for (j=0; j < maxChannels; j++)
+				{
+					// Rename 4-op channels
+					if ((j >= 0 && j <=2) || (j >= 9 && j <= 11))
+					{
+						
+						if (oplStatus.channels[j].flag4Op == 1)
+						{
+							drawStringAtPosition("4OP", oplStatus.channels[j].displayX+36, oplStatus.channels[j].displayY, 0x0C);
+							if (j == 0)
+							{
+								drawStringAtPosition("01+04", oplStatus.channels[0].displayX+2, oplStatus.channels[0].displayY, 0x0F);
+							}
+							else if (j == 1)
+							{
+								drawStringAtPosition("02+05", oplStatus.channels[1].displayX+2, oplStatus.channels[1].displayY, 0x0F);
+							}
+							else if (j == 2)
+							{
+								drawStringAtPosition("03+06", oplStatus.channels[2].displayX+2, oplStatus.channels[2].displayY, 0x0F);
+							}
+							else if (j == 9)
+							{
+								drawStringAtPosition("10+13", oplStatus.channels[9].displayX+2, oplStatus.channels[9].displayY, 0x0F);
+							}
+							else if (j == 10)
+							{
+								drawStringAtPosition("11+14", oplStatus.channels[10].displayX+2, oplStatus.channels[10].displayY, 0x0F);
+							}
+							else if (j == 11)
+							{
+								drawStringAtPosition("12+15", oplStatus.channels[11].displayX+2, oplStatus.channels[11].displayY, 0x0F);
+							}
+						}
+					}
+					// Channel has reverted to 2-op - need to redraw the paired channels too
+					if ((j >= 0 && j <=5) || (j >= 9 && j <= 14))
+					{
+						if (oplStatus.channels[j].flag4Op == 0)
+						{
+							
+							sprintf(txtDrawBuffer, "Ch.%02d", j+1);
+							drawStringAtPosition(txtDrawBuffer, oplStatus.channels[j].displayX+2, oplStatus.channels[j].displayY, 0x0F);
+							drawStringAtPosition("\xCD\xCD\xCD", oplStatus.channels[j].displayX+36, oplStatus.channels[j].displayY, 0x08);
+						}					
+					}
+				}
+				// Redraw lines 'n stuff
+				for (j=0; j < maxChannels; j++)
+				{
+					
+					// Channel headers (for channels that can switch between 2op and 4op)
+					if (j < 3 || (j > 5 && j < 12) || j > 14)
+					{
+						for (k=1; k<36; k++)
+						{
+							// Skip the channel number location
+							if ( k<2 || k>6 )
+							{	// Draw horizontal line
+								drawCharacterAtPosition(0xCD, oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY, 0x08);
+							}
+						}
+						// Draw corner pieces
+						drawCharacterAtPosition(0xD5, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY, 0x08);
+						drawCharacterAtPosition(0xB8, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY, 0x08);
+						// Clear extra characters that may have been left behind in 2-op mode
+						if (oplStatus.channels[j].flag4Op == 1)
+						{
+							drawCharacterAtPosition(0xB3, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY+4, 0x08);
+							drawCharacterAtPosition(0xB3, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY+4, 0x08);
+							for (k=8; k<33; k++)
+							{
+								drawCharacterAtPosition(0x20, oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY+4, 0x08);
+							}
+							drawCharacterAtPosition(0x20, oplStatus.channels[j].displayX+35, oplStatus.channels[j].displayY+4, 0x08);
+						}
+						
+					}
+					// Channel headers (2op channels)
+					else
+					{
+						if (oplStatus.channels[j].flag4Op == 0)
+						{
+							for (k=1; k<36; k++)
+							{
+								// Skip the channel number location
+								if ( k<2 || k>6 )
+								{
+									// Draw horizontal line
+									drawCharacterAtPosition(0xCD, oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY, 0x08);
+								}
+							}
+							// Draw corner pieces
+							drawCharacterAtPosition(0xD5, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY, 0x08);
+							drawCharacterAtPosition(0xB8, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY, 0x08);
+						}
+					}
+				}
+			}
+			
+			// OPL3 "new bit"
+			else if (i == 0x105)
+			{
+				oplStatus.flagOPL3Mode = (oplRegisterMap[0x105] & 0x01);
+				
+				// Force redraw panning
+				for (j = 0x00; j <= 0x08; j++)
+				{
+					oplChangeMap[0xC0+j] = 1;
+				}
+				for (j = 0x00; j <= 0x08; j++)
+				{
+					oplChangeMap[0x1C0+j] = 1;
+				}
+			}
+		
+			// End of processing, this byte has been handled
+			oplChangeMap[i] = 0;
+		}	
 	}
-	requestScreenDraw++;
+	// Draw operation is done
+	requestScreenDraw = 0;
 }
 
 // Draws the static UI components
 void drawTextUI(void)
 {
 	int i;
+	int j;
 	
 	// Blue bar at top
 	for (i=0; i<55; i++)
@@ -1379,6 +1529,29 @@ void drawTextUI(void)
 	
 	if (settings.struggleBus == 0)
 	{
+		
+		for (i=0; i<maxChannels; i++)
+		{
+			// Initial channel numbers
+			sprintf(txtDrawBuffer, "Ch.%02d", i+1);
+			drawStringAtPosition(txtDrawBuffer, oplStatus.channels[i].displayX+2, oplStatus.channels[i].displayY, 0x0F);
+			drawStringAtPosition("\xCD\xCD\xCD", oplStatus.channels[i].displayX+36, oplStatus.channels[i].displayY, 0x08);
+			
+			// Initial horizontal lines
+			// Will be redrawn if we change to 4op mode
+			for (j=1; j<36; j++)
+			{
+				// Skip the channel number location
+				if ( j<2 || j>6 )
+				{	// Draw horizontal line
+					drawCharacterAtPosition(0xCD, oplStatus.channels[i].displayX+j, oplStatus.channels[i].displayY, 0x08);
+				}
+			}
+			// Draw corner pieces
+			drawCharacterAtPosition(0xD5, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY, 0x08);
+			drawCharacterAtPosition(0xB8, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY, 0x08);
+		}
+		
 		// Some vertical lines (these never change)
 		for (i=0; i<maxChannels; i++)
 		{
@@ -1569,10 +1742,6 @@ void writeOPL(unsigned int reg, unsigned char data)
 			{
 				inp(oplBaseAddr);
 			}
-			
-			// Write the same data to our "register map", used for visualizing the OPL state.
-			oplRegisterMap[reg] = data;
-			
 		}
 		// OPL2 and/or OPL3 primary register set
 		else
@@ -1593,10 +1762,14 @@ void writeOPL(unsigned int reg, unsigned char data)
 			{
 				inp(oplBaseAddr);
 			}
-			
-			// Write the same data to our "register map", used for visualizing the OPL state.
-			oplRegisterMap[reg] = data;
 		}
+		
+		// Write the same data to our "register map", used for visualizing the OPL state, as well as the change map to denote that this bit needs to be interpreted and potentially drawn.
+		oplRegisterMap[reg] = data;
+		oplChangeMap[reg] = 1;
+		
+		// Request a screen draw for the display update
+		requestScreenDraw = 1;
 }
 
 // Reset OPL to original state, including turning off OPL3 mode
@@ -1804,138 +1977,6 @@ void detectOPL(void)
 		
 	}
 	sleep(1);
-}
-
-// Take the register data and pack it into the structs for easier manipulation across the program
-void interpretOPL(void)
-{
-	// Iterate channels and display relevant information in a more human readable way
-	// Basically, this cycles through all the operators in order and puts them where they need to be.
-	// The OPL is a bit weird in that the second operator of each channel is offset by 3 from the first, and there's a random gap in the middle of the list so we can't do this completely linearly.  We have an operator order lookup table to help.
-	
-	int i;
-	int regOffset;
-	int channelOffset;
-	int targetOp1;
-	int targetOp2;
-	
-	// Chip-level items
-	
-	// OPL3 Mode / "New bit"
-	oplStatus.flagOPL3Mode = (oplRegisterMap[0x105] & 0x01);
-	
-	// 4-op flags are global to the chip, in the upper register set.
-	oplStatus.channels[0].flag4Op = oplRegisterMap[0x104] & 0x01;
-	oplStatus.channels[3].flag4Op = oplRegisterMap[0x104] & 0x01;
-	oplStatus.channels[1].flag4Op = oplRegisterMap[0x104] & 0x02 >> 1;
-	oplStatus.channels[4].flag4Op = oplRegisterMap[0x104] & 0x02 >> 1;
-	oplStatus.channels[2].flag4Op = oplRegisterMap[0x104] & 0x04 >> 2;
-	oplStatus.channels[5].flag4Op = oplRegisterMap[0x104] & 0x04 >> 2;
-	oplStatus.channels[9].flag4Op = oplRegisterMap[0x104] & 0x08 >> 3;
-	oplStatus.channels[12].flag4Op = oplRegisterMap[0x104] & 0x08 >> 3;
-	oplStatus.channels[10].flag4Op = oplRegisterMap[0x104] & 0x10 >> 4;
-	oplStatus.channels[13].flag4Op = oplRegisterMap[0x104] & 0x10 >> 4;
-	oplStatus.channels[11].flag4Op = oplRegisterMap[0x104] & 0x20 >> 5;
-	oplStatus.channels[14].flag4Op = oplRegisterMap[0x104] & 0x20 >> 5;
-	
-	for (i=0; i < maxChannels; i++)
-	{
-		// Precalculate operators of channel
-		// Since this value is needed a bunch of times, this means less adding / multiplying (18x2=36 total per function call instead of 18x24=432!)
-		// Every pointless optimization counts!  Tbh, it helps readability too.
-		targetOp1 = i*2;
-		targetOp2 = targetOp1+1;
-		
-		// For channel level lookups, we don't use the precalculated offsets like the operators.  Instead we can just add 0x100 to the register number, and subtract 9 from the channel number, when looking at OPL3 channels.
-		if (i < 9)
-		{
-			regOffset = 0;
-			channelOffset = i;
-		}
-		else
-		{
-			regOffset = 0x100;
-			channelOffset = i-9;
-		}
-		
-		// Channel level items (uses regOffset to locate)
-		
-			// Frequency number (is a little weird - has to be built from two spots)
-			oplStatus.channels[i].frequencyNumber = (oplRegisterMap[(regOffset+0xA0)+channelOffset]) + ((oplRegisterMap[(regOffset+0xB0)+channelOffset] & 0x03) << 8);
-			
-			// Block number
-			oplStatus.channels[i].blockNumber = ((oplRegisterMap[(regOffset+0xB0)+channelOffset] >> 2) & 0x07);
-			
-			// Key on
-			oplStatus.channels[i].keyOn = ((oplRegisterMap[(regOffset+0xB0)+channelOffset] >> 5) & 0x01);
-			
-			// Panning
-			oplStatus.channels[i].panning = ((oplRegisterMap[(regOffset+0xC0)+channelOffset] >> 4) & 0x03);
-			
-			// Algorithm type
-			oplStatus.channels[i].synthesisType = ((oplRegisterMap[(regOffset+0xC0)+channelOffset]) & 0x01);
-			
-			// Feedback
-			oplStatus.channels[i].feedback = ((oplRegisterMap[(regOffset+0xC0)+channelOffset] >> 1) & 0x07);
-		
-		
-		// Operator level items (uses oplOperatorOrder lookup)
-		
-			// Attack rate
-			oplStatus.channels[i].operators[0].attackRate = (oplRegisterMap[0x60+oplOperatorOrder[targetOp1]] >> 4);
-			oplStatus.channels[i].operators[1].attackRate = (oplRegisterMap[0x60+oplOperatorOrder[targetOp2]] >> 4);
-			
-			// Decay rate
-			oplStatus.channels[i].operators[0].decayRate = (oplRegisterMap[0x60+oplOperatorOrder[targetOp1]] & 0x0F);
-			oplStatus.channels[i].operators[1].decayRate = (oplRegisterMap[0x60+oplOperatorOrder[targetOp2]] & 0x0F);
-			
-			// Sustain level
-			oplStatus.channels[i].operators[0].sustainLevel = (oplRegisterMap[0x80+oplOperatorOrder[targetOp1]] >> 4);
-			oplStatus.channels[i].operators[1].sustainLevel = (oplRegisterMap[0x80+oplOperatorOrder[targetOp2]] >> 4);
-			
-			// Release rate
-			oplStatus.channels[i].operators[0].releaseRate = (oplRegisterMap[0x80+oplOperatorOrder[targetOp1]] & 0x0F);
-			oplStatus.channels[i].operators[1].releaseRate = (oplRegisterMap[0x80+oplOperatorOrder[targetOp2]] & 0x0F);
-			
-			// Key scale level
-			oplStatus.channels[i].operators[0].keyScaleLevel = (oplRegisterMap[0x40+oplOperatorOrder[targetOp1]] >> 6);
-			oplStatus.channels[i].operators[1].keyScaleLevel = (oplRegisterMap[0x40+oplOperatorOrder[targetOp2]] >> 6);
-			
-			// Output level
-			oplStatus.channels[i].operators[0].outputLevel = (oplRegisterMap[0x40+oplOperatorOrder[targetOp1]] & 0x3F);
-			oplStatus.channels[i].operators[1].outputLevel = (oplRegisterMap[0x40+oplOperatorOrder[targetOp2]] & 0x3F);
-			
-			// Waveform type
-			// If OPL2, ignore the highest bit as those waveforms can't be used
-			if (oplStatus.flagOPL3Mode == 0)
-			{
-				oplStatus.channels[i].operators[0].waveform = (oplRegisterMap[0xE0+oplOperatorOrder[targetOp1]] & 0x03);
-				oplStatus.channels[i].operators[1].waveform = (oplRegisterMap[0xE0+oplOperatorOrder[targetOp2]] & 0x03);
-			}
-			else
-			{
-				oplStatus.channels[i].operators[0].waveform = (oplRegisterMap[0xE0+oplOperatorOrder[targetOp1]] & 0x07);
-				oplStatus.channels[i].operators[1].waveform = (oplRegisterMap[0xE0+oplOperatorOrder[targetOp2]] & 0x07);
-			}
-			
-			// Multiplier
-			oplStatus.channels[i].operators[0].frequencyMultiplierFactor = (oplRegisterMap[0x20+oplOperatorOrder[targetOp1]] & 0x0F);
-			oplStatus.channels[i].operators[1].frequencyMultiplierFactor = (oplRegisterMap[0x20+oplOperatorOrder[targetOp2]] & 0x0F);
-			
-			// Flags
-			// Tremolo
-			oplStatus.channels[i].operators[0].flagTremolo = ((oplRegisterMap[0x20+oplOperatorOrder[targetOp1]] >> 7) & 0x01);
-			oplStatus.channels[i].operators[1].flagTremolo = ((oplRegisterMap[0x20+oplOperatorOrder[targetOp2]] >> 7) & 0x01);
-			// Vibrato
-			oplStatus.channels[i].operators[0].flagFrequencyVibrato = ((oplRegisterMap[0x20+oplOperatorOrder[targetOp1]] >> 6) & 0x01);
-			oplStatus.channels[i].operators[1].flagFrequencyVibrato = ((oplRegisterMap[0x20+oplOperatorOrder[targetOp2]] >> 6) & 0x01);
-			// Sustain
-			oplStatus.channels[i].operators[0].flagSoundSustaining = ((oplRegisterMap[0x20+oplOperatorOrder[targetOp1]] >> 5) & 0x01);
-			oplStatus.channels[i].operators[1].flagSoundSustaining = ((oplRegisterMap[0x20+oplOperatorOrder[targetOp2]] >> 5) & 0x01);
-			// KSR
-			oplStatus.channels[i].operators[0].flagKSR = ((oplRegisterMap[0x20+oplOperatorOrder[targetOp1]] >> 4) & 0x01);
-			oplStatus.channels[i].operators[1].flagKSR = ((oplRegisterMap[0x20+oplOperatorOrder[targetOp2]] >> 4) & 0x01);
-	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2203,6 +2244,16 @@ int loadVGM(void)
 				killProgram(5);
 				break;
 			}
+	}
+	
+	// Register limit for display based on max channels we set
+	if (maxChannels > 9)
+	{
+		displayRegisterMax = 0x1FF;
+	}
+	else
+	{
+		displayRegisterMax = 0xFF;
 	}
 	
 	// Everything else is okay, I say it's time to load the GD3 tag!
@@ -2930,7 +2981,7 @@ void populateCurrentGd3(void)
 }
 
 // Function is called during the timer loop to actually interpret the loaded VGM command and act accordingly
-int processCommands(void)
+void processCommands(void)
 {		
 	// Read commands until we are on the same sample as the timer expects.
 	// This isn't -great- due to the high timer resolution we are always lagging a bit and it basically locks the app up on slow CPUs.
@@ -2957,7 +3008,7 @@ int processCommands(void)
 			else
 			{
 				programState = 2;
-				return 0;
+				return;
 			}
 		}
 		// Interpret which command we are looking at - data or wait?
@@ -3019,7 +3070,6 @@ int processCommands(void)
 		}
 		
 	}
-	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
