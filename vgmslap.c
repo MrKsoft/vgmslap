@@ -105,9 +105,6 @@ uint8_t readBytes(uint16_t);
 // General program vars
 uint8_t programState = 0;				// Controls current state of program (init, main loop, exit, etc)
 									// 0 = init, 1 = play, 2 = songEnd, 3 = quit
-char boolIndicator[2][4] = {	// Text identifiers for boolean display values
-	"-\0",
-	"\xFB\0"};
 
 // Input vars
 uint8_t keyboardCurrent = 0;			// Current keycode from getch()

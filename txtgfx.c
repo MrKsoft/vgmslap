@@ -24,64 +24,66 @@
 #define CHAN_DISP_OFFSET_OPERATOR_PARAMETERS 9
 
 // Text identifiers for each waveform type, to be printed in the operator display
-char oplWaveformNames[8][6] = {
-	"/\x5C\/\x5C\0", 
-	"^-^-\0", 
-	"^^^^\0", 
-	"/\x1C/\x1C\0", 
-	"^v--\0", 
-	"^^--\0", 
-	"\xA9\xAA__\0", 
-	"-\xFB\x5C-\0"};	
-// Text identifiers for each synthesis/algorithm type, to be printed in the channel display
-char oplAlgorithmNames[6][7] = {
-	"FM   \0",		// 2 op  1+2
-	"AS   \0",		// 2 op  1>2
-	"FM-FM\0",		// 4-op  1>2>3>4
-	"AS-FM\0",		// 4-op  1+(2>3>4)
-	"FM-AS\0",		// 4-op  (1>2)+(3>4)
-	"AS-AS\0"};		// 4-op  (2>3)+4
+char oplWaveformNames[8][5] = {
+	"/\x5C\/\x5C", 
+	"^-^-", 
+	"^^^^", 
+	"/\x1C/\x1C", 
+	"^v--", 
+	"^^--", 
+	"\xA9\xAA__", 
+	"-\xFB\x5C-"};	
+// Text identifiers for each synthesis/algorithm type, to be printed in the channel display (not currently used)
+char oplAlgorithmNames[6][6] = {
+	"FM   ",		// 2 op  1+2
+	"AS   ",		// 2 op  1>2
+	"FM-FM",		// 4-op  1>2>3>4
+	"AS-FM",		// 4-op  1+(2>3>4)
+	"FM-AS",		// 4-op  (1>2)+(3>4)
+	"AS-AS"};		// 4-op  (2>3)+4
 // Text identifiers for each feedback type, to be printed in the channel display
-char oplFeedbackNames[8][4] = {
-	" 0\0",
-	"\xF6\x46\0", // div 16
-	"\xF6\x38\0", // div 8
-	"\xF6\x34\0", // div 4
-	"\xF6\x32\0", // div 2
-	"\xF6\x31\0", // div 1
-	"x2\0",
-	"x4\0"};
+char oplFeedbackNames[8][3] = {
+	" 0",
+	"\xF6\x46", // div 16
+	"\xF6\x38", // div 8
+	"\xF6\x34", // div 4
+	"\xF6\x32", // div 2
+	"\xF6\x31", // div 1
+	"x2",
+	"x4"};
 // Text identifiers for each KSL level, to be printed in the operator display
-char oplKSLNames[4][5] = {
-	"---\0",
-	"1.5\0",
-	"3.0\0",
-	"6.0\0"};
+char oplKSLNames[4][4] = {
+	"---",
+	"1.5",
+	"3.0",
+	"6.0"};
 // Text identifiers for each frequency multiplication level, to be printed in the operator display
-char oplMultiplierNames[16][3] = {
-	"\xAB\0",
-	"1\0",
-	"2\0",
-	"3\0",
-	"4\0",
-	"5\0",
-	"6\0",
-	"7\0",
-	"8\0",
-	"9\0",
-	"A\0",
-	"A\0",
-	"C\0",
-	"C\0",
-	"F\0",
-	"F\0"};
+char oplMultiplierNames[16][2] = {
+	"\xAB",
+	"1",
+	"2",
+	"3",
+	"4",
+	"5",
+	"6",
+	"7",
+	"8",
+	"9",
+	"A",
+	"A",
+	"C",
+	"C",
+	"F",
+	"F"};
 
+char boolIndicator[2][2] = {	// Text identifiers for boolean display values
+	"-",
+	"\xFB"};
 
 // "Text Graphics"
 // They are stored as arrays, characters followed by attribute colors
 // When drawn using the drawCharacterGraphic function, the width and height are passed to it and it uses that to calculate where the text ends and attribute begins.
 // There are certainly better ways to do this, but this way is mine!
-
 
 // 2-op algorithm illustrations - 7x3
 
