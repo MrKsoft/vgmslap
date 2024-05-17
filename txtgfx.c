@@ -23,6 +23,17 @@
 #define CHAN_DISP_OFFSET_CHANNEL_FEEDBACK 33
 #define CHAN_DISP_OFFSET_OPERATOR_PARAMETERS 9
 
+// Define special Code Page 437 characters
+
+#define CHAR_MUSIC_NOTE 0x0E
+#define CHAR_BOX_SINGLE_HORIZONTAL 0xC4
+#define CHAR_BOX_DOUBLE_HORIZONTAL 0xCD
+#define CHAR_BOX_SINGLE_VERTICAL 0xB3
+#define CHAR_BOX_UP_SINGLE_RIGHT_SINGLE 0xC0
+#define CHAR_BOX_UP_SINGLE_LEFT_SINGLE 0xD9
+#define CHAR_BOX_DOWN_SINGLE_LEFT_DOUBLE 0xB8
+#define CHAR_BOX_DOWN_SINGLE_RIGHT_DOUBLE 0xD5
+
 // Text identifiers for each waveform type, to be printed in the operator display
 char oplWaveformNames[8][5] = {
 	"/\x5C\/\x5C", 

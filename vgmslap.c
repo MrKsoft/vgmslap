@@ -822,41 +822,41 @@ void drawChannelTable(void)
 					// Tremolo
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagTremolo == 1)
 					{
-						drawCharacterAtPosition(0x54, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+1, 0x07);
+						drawCharacterAtPosition('T', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+1, 0x07);
 					}
 					else
 					{
-						drawCharacterAtPosition(0x54, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+1, 0x07);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+1, 0x08);
 					}
 					
 					// Vibrato
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagFrequencyVibrato == 1)
 					{
-						drawCharacterAtPosition(0x56, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+1, 0x07);
+						drawCharacterAtPosition('V', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+1, 0x07);
 					}
 					else
 					{
-						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+1, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+1, 0x08);
 					}
 					
 					// Sustain
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagSoundSustaining == 1)
 					{
-						drawCharacterAtPosition(0x53, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+1, 0x07);
+						drawCharacterAtPosition('S', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+1, 0x07);
 					}
 					else
 					{
-						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+1, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+1, 0x08);
 					}
 					
 					// KSR
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagKSR == 1)
 					{
-						drawCharacterAtPosition(0x4B, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+1, 0x07);
+						drawCharacterAtPosition('K', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+1, 0x07);
 					}
 					else
 					{
-						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+1, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+1, 0x08);
 					}
 				}
 				else if (targetOperator == 1)
@@ -867,41 +867,41 @@ void drawChannelTable(void)
 					// Tremolo
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagTremolo == 1)
 					{
-						drawCharacterAtPosition(0x54, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+3, 0x07);
+						drawCharacterAtPosition('T', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+3, 0x07);
 					}
 					else
 					{
-						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+3, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+3, 0x08);
 					}
 					
 					// Vibrato
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagFrequencyVibrato == 1)
 					{
-						drawCharacterAtPosition(0x56, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+3, 0x07);
+						drawCharacterAtPosition('V', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+3, 0x07);
 					}
 					else
 					{
-						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+3, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+3, 0x08);
 					}
 					
 					// Sustain
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagSoundSustaining == 1)
 					{
-						drawCharacterAtPosition(0x53, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+3, 0x07);
+						drawCharacterAtPosition('S', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+3, 0x07);
 					}
 					else
 					{
-						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+3, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+3, 0x08);
 					}
 					
 					// KSR
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagKSR == 1)
 					{
-						drawCharacterAtPosition(0x4B, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+3, 0x07);
+						drawCharacterAtPosition('K', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+3, 0x07);
 					}
 					else
 					{
-						drawCharacterAtPosition(0x2D, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+3, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+3, 0x08);
 					}
 				}
 			}
@@ -1095,7 +1095,7 @@ void drawChannelTable(void)
 							sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
 							drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+4,0x0E);
 							// Key on
-							drawCharacterAtPosition(0x0E, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+5, tempAttribute);
+							drawCharacterAtPosition(CHAR_MUSIC_NOTE, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+5, tempAttribute);
 						}
 					}
 					else
@@ -1107,7 +1107,7 @@ void drawChannelTable(void)
 						sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
 						drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,0x0E);
 						// Key on
-						drawCharacterAtPosition(0x0E, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute);
+						drawCharacterAtPosition(CHAR_MUSIC_NOTE, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute);
 					}
 				}
 				// Positioning for 2-op channels
@@ -1120,7 +1120,7 @@ void drawChannelTable(void)
 					sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
 					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,0x0E);
 					// Key on
-					drawCharacterAtPosition(0x0E, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute);
+					drawCharacterAtPosition(CHAR_MUSIC_NOTE, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute);
 				}
 			}
 			
@@ -1153,20 +1153,20 @@ void drawChannelTable(void)
 						// Left
 						if ((oplStatus.channels[targetChannel].panning & 0x01) == 1)
 						{
-							drawCharacterAtPosition(0x28, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+3), 0xF);		
+							drawCharacterAtPosition('(', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+3), 0xF);		
 						}
 						else
 						{
-							drawCharacterAtPosition(0x28, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+3), 0x8);
+							drawCharacterAtPosition('(', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+3), 0x8);
 						}
 						// Right
 						if ((oplStatus.channels[targetChannel].panning & 0x02) == 2)
 						{
-							drawCharacterAtPosition(0x29, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+3), 0xF);		
+							drawCharacterAtPosition(')', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+3), 0xF);		
 						}
 						else
 						{
-							drawCharacterAtPosition(0x29, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+3), 0x8);
+							drawCharacterAtPosition(')', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+3), 0x8);
 						}
 					}
 					else if (oplStatus.channels[targetChannel].flag4Op != 0)
@@ -1177,20 +1177,20 @@ void drawChannelTable(void)
 							// Left
 							if ((oplStatus.channels[targetChannel].panning & 0x01) == 1)
 							{
-								drawCharacterAtPosition(0x28, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+5), 0xF);
+								drawCharacterAtPosition('(', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+5), 0xF);
 							}
 							else
 							{
-								drawCharacterAtPosition(0x28, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+5), 0x8);
+								drawCharacterAtPosition('(', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+5), 0x8);
 							}
 							// Right
 							if ((oplStatus.channels[targetChannel].panning & 0x02) == 2)
 							{
-								drawCharacterAtPosition(0x29, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+5), 0xF);						
+								drawCharacterAtPosition(')', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+5), 0xF);						
 							}
 							else
 							{
-								drawCharacterAtPosition(0x29, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+5), 0x8);
+								drawCharacterAtPosition(')', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+5), 0x8);
 							}
 						}
 					}
@@ -1390,22 +1390,22 @@ void drawChannelTable(void)
 							// Skip the channel number location
 							if ( k<2 || k>6 )
 							{	// Draw horizontal line
-								drawCharacterAtPosition(0xCD, oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY, 0x08);
+								drawCharacterAtPosition(CHAR_BOX_DOUBLE_HORIZONTAL, oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY, 0x08);
 							}
 						}
 						// Draw corner pieces
-						drawCharacterAtPosition(0xD5, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY, 0x08);
-						drawCharacterAtPosition(0xB8, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY, 0x08);
+						drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_RIGHT_DOUBLE, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY, 0x08);
+						drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_LEFT_DOUBLE, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY, 0x08);
 						// Clear extra characters that may have been left behind in 2-op mode
 						if (oplStatus.channels[j].flag4Op == 1)
 						{
-							drawCharacterAtPosition(0xB3, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY+4, 0x08);
-							drawCharacterAtPosition(0xB3, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY+4, 0x08);
+							drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY+4, 0x08);
+							drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY+4, 0x08);
 							for (k=8; k<33; k++)
 							{
-								drawCharacterAtPosition(0x20, oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY+4, 0x08);
+								drawCharacterAtPosition(' ', oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY+4, 0x08);
 							}
-							drawCharacterAtPosition(0x20, oplStatus.channels[j].displayX+35, oplStatus.channels[j].displayY+4, 0x08);
+							drawCharacterAtPosition(' ', oplStatus.channels[j].displayX+35, oplStatus.channels[j].displayY+4, 0x08);
 						}
 						
 					}
@@ -1420,12 +1420,12 @@ void drawChannelTable(void)
 								if ( k<2 || k>6 )
 								{
 									// Draw horizontal line
-									drawCharacterAtPosition(0xCD, oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY, 0x08);
+									drawCharacterAtPosition(CHAR_BOX_DOUBLE_HORIZONTAL, oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY, 0x08);
 								}
 							}
 							// Draw corner pieces
-							drawCharacterAtPosition(0xD5, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY, 0x08);
-							drawCharacterAtPosition(0xB8, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY, 0x08);
+							drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_RIGHT_DOUBLE, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY, 0x08);
+							drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_LEFT_DOUBLE, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY, 0x08);
 						}
 					}
 				}
@@ -1547,40 +1547,40 @@ void drawTextUI(void)
 				// Skip the channel number location
 				if ( j<2 || j>6 )
 				{	// Draw horizontal line
-					drawCharacterAtPosition(0xCD, oplStatus.channels[i].displayX+j, oplStatus.channels[i].displayY, 0x08);
+					drawCharacterAtPosition(CHAR_BOX_DOUBLE_HORIZONTAL, oplStatus.channels[i].displayX+j, oplStatus.channels[i].displayY, 0x08);
 				}
 			}
 			// Draw corner pieces
-			drawCharacterAtPosition(0xD5, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY, 0x08);
-			drawCharacterAtPosition(0xB8, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_RIGHT_DOUBLE, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_LEFT_DOUBLE, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY, 0x08);
 		}
 		
 		// Some vertical lines (these never change)
 		for (i=0; i<maxChannels; i++)
 		{
-			drawCharacterAtPosition(0xB3, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY+1, 0x08);
-			drawCharacterAtPosition(0xB3, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY+2, 0x08);
-			drawCharacterAtPosition(0xB3, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY+3, 0x08);
-			drawCharacterAtPosition(0xB3, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY+1, 0x08);
-			drawCharacterAtPosition(0xB3, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY+2, 0x08);
-			drawCharacterAtPosition(0xB3, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY+3, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY+1, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY+2, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY+3, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY+1, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY+2, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY+3, 0x08);
 		}
 		
 		// Bottom of channel display (never changes)
 		
-		drawCharacterAtPosition(0xC0, oplStatus.channels[8].displayX, oplStatus.channels[8].displayY+4, 0x08);
-		drawCharacterAtPosition(0xD9, oplStatus.channels[8].displayX+39, oplStatus.channels[8].displayY+4, 0x08);
+		drawCharacterAtPosition(CHAR_BOX_UP_SINGLE_RIGHT_SINGLE, oplStatus.channels[8].displayX, oplStatus.channels[8].displayY+4, 0x08);
+		drawCharacterAtPosition(CHAR_BOX_UP_SINGLE_LEFT_SINGLE, oplStatus.channels[8].displayX+39, oplStatus.channels[8].displayY+4, 0x08);
 		for (i=1; i<39; i++)
 		{
-			drawCharacterAtPosition(0xC4, oplStatus.channels[8].displayX+i, oplStatus.channels[8].displayY+4, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_HORIZONTAL, oplStatus.channels[8].displayX+i, oplStatus.channels[8].displayY+4, 0x08);
 		}
 		if (maxChannels > 9)
 		{
-			drawCharacterAtPosition(0xC0, oplStatus.channels[17].displayX, oplStatus.channels[17].displayY+4, 0x08);
-			drawCharacterAtPosition(0xD9, oplStatus.channels[17].displayX+39, oplStatus.channels[17].displayY+4, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_UP_SINGLE_RIGHT_SINGLE, oplStatus.channels[17].displayX, oplStatus.channels[17].displayY+4, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_UP_SINGLE_LEFT_SINGLE, oplStatus.channels[17].displayX+39, oplStatus.channels[17].displayY+4, 0x08);
 			for (i=1; i<39; i++)
 			{
-				drawCharacterAtPosition(0xC4, oplStatus.channels[17].displayX+i, oplStatus.channels[8].displayY+4, 0x08);
+				drawCharacterAtPosition(CHAR_BOX_SINGLE_HORIZONTAL, oplStatus.channels[17].displayX+i, oplStatus.channels[8].displayY+4, 0x08);
 			}
 		}
 	}
@@ -1683,7 +1683,7 @@ void clearTextScreen(void)
 	{
 		for (column = 0; column < 80; column++)
 		{
-		drawCharacterAtPosition(0x20,column,row,0xE);
+		drawCharacterAtPosition(' ',column,row,0xE);
 		}
 	}
 }
@@ -1699,7 +1699,7 @@ void clearInterface(void)
 	{
 		for (column = GD3_TAG_START_X; column < 80; column++)
 		{
-		drawCharacterAtPosition(0x20,column,row,0xE);
+		drawCharacterAtPosition(' ',column,row,0xE);
 		}
 	}
 	
@@ -1710,7 +1710,7 @@ void clearInterface(void)
 	{
 		for (column = (CHAN_TABLE_START_X+40); column < 80; column++)
 		{
-		drawCharacterAtPosition(0x20,column,row,0xE);
+		drawCharacterAtPosition(' ',column,row,0xE);
 		}
 	}
 }
