@@ -36,6 +36,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 // Could use Watcom stdint.h as well, but this should allow it to compile in Borland too
+// Also helpful for reducing confusion on # of bytes and signs
+// Example, recall that "char" is default unsigned, but "int" is default signed
 
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
@@ -60,11 +62,11 @@ typedef unsigned long uint32_t;
 // Display functions
 void clearTextScreen(void);
 void clearInterface(void);
-void setVideoMode(int);
+void setVideoMode(uint16_t);
 void drawTextUI(void);
-void drawCharacterAtPosition(unsigned char, unsigned char, unsigned char, unsigned char);
-void drawStringAtPosition(char*, unsigned char, unsigned char, unsigned char);
-void drawGraphicAtPosition(const int*, unsigned char, unsigned char, unsigned char, unsigned char);
+void drawCharacterAtPosition(char, uint8_t, uint8_t, uint8_t);
+void drawStringAtPosition(char*, uint8_t, uint8_t, uint8_t);
+void drawGraphicAtPosition(const char*, uint8_t, uint8_t, uint8_t, uint8_t);
 void drawChannelTable(void);
 
 // Playlist functions
@@ -75,7 +77,7 @@ void initPlayback(void);
 
 // OPL control functions
 void detectOPL(void);
-void writeOPL(unsigned int, unsigned char);
+void writeOPL(uint16_t, uint8_t);
 void resetOPL(void);
 
 // Timing functions
@@ -84,24 +86,24 @@ void initTimer(uint16_t);
 void resetTimer (void);
 
 // VGM parsing functions
-int getNextCommandData(void);
+uint8_t getNextCommandData(void);
 wchar_t* getNextGd3String(void);
-int loadVGM(void);
+uint8_t loadVGM(void);
 void populateCurrentGd3(void);
 void processCommands(void);
 
 // Other functions
 void inputHandler(void);
 void setConfig(void);
-void killProgram(int);
-int readBytes(int);
+void killProgram(uint8_t);
+uint8_t readBytes(uint16_t);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variable definitions
 ///////////////////////////////////////////////////////////////////////////////
 
 // General program vars
-int programState = 0;				// Controls current state of program (init, main loop, exit, etc)
+uint8_t programState = 0;				// Controls current state of program (init, main loop, exit, etc)
 									// 0 = init, 1 = play, 2 = songEnd, 3 = quit
 char boolIndicator[2][4] = {	// Text identifiers for boolean display values
 	"-\0",
@@ -121,12 +123,12 @@ char textRows = 25;								// Number of rows in text mode
 uint16_t displayRegisterMax = 0xFF;				// How many registers to iterate for screen refresh
 
 // File-related vars
-unsigned char vgmIdentifier[] = "Vgm ";	// VGM magic number
-unsigned char gzMagicNumber[2] = {0x1F, 0x8B}; // GZ magic number
+char vgmIdentifier[] = "Vgm ";			// VGM magic number
+char gzMagicNumber[2] = {0x1F, 0x8B}; 	// GZ magic number
 char* fileName;							// Filename from argument
 char* vgmFileName;						// Current VGM file name
-unsigned char playlistLineBuffer[255];  // Current line of playlist (if being used)
-unsigned char vgmFileBuffer[256]; 		// Buffer of up to 256 bytes (which happens to be the max size of the VGM header...)
+char playlistLineBuffer[255];  			// Current line of playlist (if being used)
+char vgmFileBuffer[256]; 				// Buffer of up to 256 bytes (which happens to be the max size of the VGM header...)
 FILE *initialFilePointer;				// Pointer to initially passed file (playlist or VGM)
 FILE *playlistFilePointer;				// Pointer to loaded playlist
 FILE *vgmFilePointer; 					// Pointer to loaded VGM file
@@ -150,7 +152,7 @@ uint8_t commandData = 0; 			// Stores current data to put in OPL register
 uint8_t maxChannels = 9;			// When iterating channels, how many to go through (9 for OPL2, 18 for OPL3)
 // Due to weird operator offsets to form a channel, this is a list of offsets from the base (0x20/0x40/0x60/0x80/0xE0) for each.  First half is OPL2 and second is OPL3, so OPL3 ones have 0x100 added to fit our data model.
 // Original op order numbers: {0, 3, 1, 4, 2, 5, 6, 9, 7, 10, 8, 11, 12, 15, 13, 16, 14, 17, 18, 21, 19, 22, 20, 23, 24, 27, 25, 28, 26, 29, 30, 33, 31, 34, 32, 35};
-const int oplOperatorOrder[] = { 			
+const uint16_t oplOperatorOrder[] = { 			
 	0x00, 0x03,    // Channel 1 (OPL2)
 	0x01, 0x04,    // Channel 2
 	0x02, 0x05,    // Channel 3
@@ -172,16 +174,16 @@ const int oplOperatorOrder[] = {
 
 // Offsets from base of a register category (for instance Attack/Decay at 0x60) and how it maps to a channel/op.
 // OPL2 only, add 9 to channel number for OPL3
-const int oplOperatorToChannel[] = {
+const uint8_t oplOperatorToChannel[] = {
 0, 1, 2, 0, 1, 2, 0, 0, 3, 4, 5, 3, 4, 5, 0, 0, 6, 7, 8, 6, 7, 8
 };
-const int oplOffsetToOperator[] = {
+const uint8_t oplOffsetToOperator[] = {
 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1
 };
 
 // Timing-related vars
 void interrupt (*biosISR8)(void);			// Pointer to the BIOS interrupt service routine 8
-volatile unsigned long tickCounter = 0; 	// Counts the number of timer ticks elapsed
+volatile uint32_t tickCounter = 0; 			// Counts the number of timer ticks elapsed
 uint16_t biosCounter = 0;					// Used to determine when to run the original BIOS ISR8
 uint32_t fastTickRate;						// Divider to apply to the 8253 PIT
 uint8_t requestScreenDraw;					// Set to 1 when the screen needs to redraw
@@ -191,8 +193,8 @@ uint32_t dataCurrentSample = 0;				// VGM sample we are on in the file
 
 // VGM-related vars
 char commandID = 0; 		// Stores most recent VGM command interpreted
-int loopCount = 0; 			// Tracks what loop we are on during playback
-int loopMax = 1;			// How many times to loop - Todo: Make configurable
+uint8_t loopCount = 0; 		// Tracks what loop we are on during playback
+uint8_t loopMax = 1;		// How many times to loop
 uint8_t vgmChipType = 0; 	// What chip configuration has been determined from the VGM file
 							// We have to deal with all permutations that a PC could theoretically play
 							// 0 = No OPLs found
@@ -317,7 +319,7 @@ oplChip oplStatus;
 // Main program loop
 int main(int argc, char** argv)
 {
-	int i;
+	uint16_t i;
 	// Check for arguments
 		if (argc != 2)
 		{
@@ -771,12 +773,12 @@ void interrupt timerHandler(void)
 // Only interprets and draws parts that change
 void drawChannelTable(void)
 {
-	int i;
-	int j;
-	int k;
-	int targetChannel;
-	int targetOperator;
-	int tempAttribute = 0x0;
+	uint16_t i;
+	uint16_t j;
+	uint16_t k;
+	uint8_t targetChannel;
+	uint8_t targetOperator;
+	uint8_t tempAttribute = 0x0;
 	
 	// Start at 0x20 as that is the lowest register we care about
 	for (i = 20; i <= displayRegisterMax; i++)
@@ -1214,7 +1216,7 @@ void drawChannelTable(void)
 				else if (oplStatus.channels[targetChannel].flag4Op != 0)
 				{
 					// Only do this if we are on the first channel of the 4-op pairing
-					if ((targetChannel >= 0 && targetChannel <=2) || (targetChannel >=9 && targetChannel <=11))
+					if (targetChannel <= 2 || (targetChannel >= 9 && targetChannel <= 11))
 					{
 						// Clean up previously written text from switching between 2/4op
 						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[targetChannel].displayY+2,0x00);
@@ -1335,7 +1337,7 @@ void drawChannelTable(void)
 				for (j=0; j < maxChannels; j++)
 				{
 					// Rename 4-op channels
-					if ((j >= 0 && j <=2) || (j >= 9 && j <= 11))
+					if (j <=2 || (j >= 9 && j <= 11))
 					{
 						
 						if (oplStatus.channels[j].flag4Op == 1)
@@ -1368,7 +1370,7 @@ void drawChannelTable(void)
 						}
 					}
 					// Channel has reverted to 2-op - need to redraw the paired channels too
-					if ((j >= 0 && j <=5) || (j >= 9 && j <= 14))
+					if ( j <=5 || (j >= 9 && j <= 14))
 					{
 						if (oplStatus.channels[j].flag4Op == 0)
 						{
@@ -1459,8 +1461,8 @@ void drawChannelTable(void)
 // Draws the static UI components
 void drawTextUI(void)
 {
-	int i;
-	int j;
+	uint8_t i;
+	uint8_t j;
 	
 	// Blue bar at top
 	for (i=0; i<55; i++)
@@ -1588,7 +1590,7 @@ void drawTextUI(void)
 }
 
 // Set video mode
-void setVideoMode(int mode)
+void setVideoMode(uint16_t mode)
 {
 	// Using the following numbers to represent what mode to switch to:
 	// 25 = 80x25 text mode
@@ -1631,19 +1633,19 @@ void setVideoMode(int mode)
 }
 
 // Put a character directly into memory at a given coordinate
-void drawCharacterAtPosition(unsigned char text, unsigned char xPos, unsigned char yPos, unsigned char attribute)
+void drawCharacterAtPosition(char text, uint8_t xPos, uint8_t yPos, uint8_t attribute)
 {
 	// Generate the correct memory location to put the text using our predefined coordinate function
-	int screenAddress = characterCoordinate(xPos, yPos);
+	uint16_t screenAddress = characterCoordinate(xPos, yPos);
 	textScreen[screenAddress++] = text;
 	textScreen[screenAddress++] = attribute;
 }
 
 // Put a full string directly into memory at a given coordinate
-void drawStringAtPosition(char* text, unsigned char xPos, unsigned char yPos, unsigned char attribute)
+void drawStringAtPosition(char* text, uint8_t xPos, uint8_t yPos, uint8_t attribute)
 {
 	// Generate the correct memory location to put the text using our predefined coordinate function
-	int screenAddress = characterCoordinate(xPos, yPos);
+	uint16_t screenAddress = characterCoordinate(xPos, yPos);
 	while (*text)
 	{
 		textScreen[screenAddress++] = *text;
@@ -1654,12 +1656,12 @@ void drawStringAtPosition(char* text, unsigned char xPos, unsigned char yPos, un
 
 // Put an array based "graphic" into memory at a given coordinate
 // Pass the name of the graphic array, dimensions, and then where you want it to start (top left)
-void drawGraphicAtPosition(const int* graphicArray, unsigned char xSize, unsigned char ySize, unsigned char xOrigin, unsigned char yOrigin)
+void drawGraphicAtPosition(const char* graphicArray, uint8_t xSize, uint8_t ySize, uint8_t xOrigin, uint8_t yOrigin)
 {
-	int xCount;
-	int yCount;
-	int maxChars = xSize*ySize;
-	int screenAddress;
+	uint8_t xCount;
+	uint8_t yCount;
+	uint16_t maxChars = xSize*ySize;
+	uint16_t screenAddress;
 	
 	for (yCount = 0; yCount < ySize; yCount++)
 	{
@@ -1678,8 +1680,8 @@ void drawGraphicAtPosition(const int* graphicArray, unsigned char xSize, unsigne
 void clearTextScreen(void)
 {
 	// Writes a blank character to every location on screen.  TextRows is set when screen mode changes.
-	int column = 0;
-	int row = 0;
+	uint8_t column = 0;
+	uint8_t row = 0;
 	for (row = 0; row < textRows; row++)
 	{
 		for (column = 0; column < 80; column++)
@@ -1692,8 +1694,8 @@ void clearTextScreen(void)
 // Clear text screen, but only certain parts of the UI
 void clearInterface(void)
 {
-	int column;
-	int row;
+	uint8_t column;
+	uint8_t row;
 	
 	// Clear GD3 tag area
 	for (row = GD3_START_Y; row < GD3_START_Y+4; row++)
@@ -1721,11 +1723,11 @@ void clearInterface(void)
 ///////////////////////////////////////////////////////////////////////////////
 
 // Send data to the OPL chip
-void writeOPL(unsigned int reg, unsigned char data)
+void writeOPL(uint16_t reg, uint8_t data)
 {
 		// Setup delay count
-		int registerDelay = oplDelayReg;
-		int dataDelay = oplDelayData;
+		uint8_t registerDelay = oplDelayReg;
+		uint8_t dataDelay = oplDelayData;
 		
 		// Second OPL2 and/or OPL3 secondary register set
 		if (reg >= 0x100)
@@ -1781,7 +1783,7 @@ void resetOPL(void)
 {
 		// Resetting the OPL has to be somewhat systematic - otherwise you run into issues with static sounds, squeaking, etc, not only when cutting off the sound but also when the sound starts back up again.
 		
-		int i;
+		uint16_t i;
 		
 		// For OPL3, turn on the NEW bit.  This ensures we can write to ALL registers on an OPL3.
 		if (detectedChip == 3)
@@ -1988,10 +1990,10 @@ void detectOPL(void)
 ///////////////////////////////////////////////////////////////////////////////
 
 // Read from the specified VGM file and person some validity checks
-int loadVGM(void)
+uint8_t loadVGM(void)
 {
 	char gzipBuffer[512];
-	int i;
+	uint16_t i;
 
 	// Try to load the VGM
 	errno = 0;
@@ -2268,7 +2270,7 @@ int loadVGM(void)
 }
 
 // Move through the file based on the commands encountered.  Loads in data for supported commands, to be processed during playback.
-int getNextCommandData(void)
+uint8_t getNextCommandData(void)
 {
 	uint32_t currentWait = 0;
 	// Proper functioning of this function is based on the file already being seeked to the VGM data offset
@@ -3082,7 +3084,7 @@ void processCommands(void)
 ///////////////////////////////////////////////////////////////////////////////
 
 // Reads in how many bytes we need for the next command.
-int readBytes(int numBytes)
+uint8_t readBytes(uint16_t numBytes)
 {
 	if ((fread(vgmFileBuffer,sizeof(char),numBytes,vgmFilePointer)) != numBytes)
 	{
@@ -3094,7 +3096,7 @@ int readBytes(int numBytes)
 }
 
 // Ends the program, with printing informational messages
-void killProgram(int errorCode)
+void killProgram(uint8_t errorCode)
 {
 	// Cleanup before closing
 	
