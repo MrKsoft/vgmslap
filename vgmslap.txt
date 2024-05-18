@@ -1,7 +1,7 @@
 ################################################################################
 #  __      _______ __  __  _____ _             _                               #
 #  \ \    / / ____|  \/  |/ ____| |           | |                              #
-#   \ \  / / |  __| \  / | (___ | | __ _ _ __ | |                              #
+#   \ \  / / |  __| \  / | (___ | | __ _ _ __ | |          Release 2           #
 #    \ \/ /| | |_ | |\/| |\___ \| |/ _` | '_ \| |   by Wafflenet, 2023-2024    #
 #     \  / | |__| | |  | |____) | | (_| | |_) |_|       www.wafflenet.com      #
 #      \/   \_____|_|  |_|_____/|_|\__,_| .__/(_)                              #
@@ -19,16 +19,14 @@ channel's parameters, GD3 tags, and simple playlist support.
 
 == [ System Requirements ] =====================================================
 
-Despite its simple appearance, for BEST results, you should run VGMSlap on a
-fast 386 or higher.  VGMSlap runs in real mode, though, so it should technically
-run on any old x86 machine, and only 640k of RAM is needed (probably less but I
-haven't tested for exact numbers).  A VGA card supporting 80x50 text mode is
-required.
+VGMSlap has been tested and works on processors as slow as a 286-12 (the slowest
+thing I have with an OPL in it), though some settings changes are required.
+For best results, a fast 386 or better is preferred.  (See the Performance Tips
+section below for more information)
 
-I am not a trained programmer with an eye for optimization; in fact, this is
-basically only my second ever C program of any meaningful substance.  I hope
-that I will be able to optimize VGMSlap over time as I learn more.  If you are
-experiencing performance issues, check out the Performance Tips section below.
+VGMSlap runs in real mode, so only 640k of RAM is needed (probably less but I
+haven't tested for exact numbers).  A VGA card supporting 80x50 text mode is
+also required.
 
 You'll also need a sound card with a Yamaha OPL2 (YM3812), Yamaha OPL3 (YMF262)
 or compatible chip.  The dual OPL2 chips on the Sound Blaster Pro 1.0 card are
@@ -52,6 +50,9 @@ You will only be able to play VGMs compatible with your card.  Check the table:
 |                         | 2x Yamaha YM3812 (OPL2) |
 |                         | Yamaha YMF262 (OPL3)    |
 '---------------------------------------------------'
+
+VGMSlap will NOT run correctly under Windows.  At best, it'll be really slow.
+Please use pure DOS!
 
 
 == [ Usage ] ===================================================================
@@ -93,7 +94,7 @@ Here is an example channel, a standard two-operator channel:
                     '--------------------------------------'
 					 (A)     (B)  (C)  (D) (E)(F) (G)(H)(I)
 
-    A. A small diagram shows how the modulator (cyan) and carrier (cyan) are
+    A. A small diagram shows how the modulator (cyan) and carrier (green) are
 	   connected and output the note (yellow).  Note these colors as they are
 	   used throughout the channel table.
 	   
@@ -130,12 +131,12 @@ Here is an example channel, a standard two-operator channel:
 	   above - which lights up when a channel's key-on flag is set.
 	   On 2xOPL2 or OPL3 VGMs, you will also see the parentheses surrounding
 	   the note.  These will light up based on the stereo panning for that
-	   channel.  On OPL2 VGMs these will not be visible.
+	   channel.  On single OPL2 VGMs these will not be visible.
 	   
 For four-operator OPL3 channels, two channels are combined.  The first two lines
 will be the first channel's operators, and the second two lines will be the
 second channel's operators.  A "4OP" indicator will show in the top-right of the
-channel.
+channel.  Feedback and note information are shared by the combined channels.
 
 
 == [ Configuration ] ===========================================================
@@ -166,13 +167,26 @@ differentiate them from normal text files.  It's your call.
 
 == [ Performance Tips ] ========================================================
 
-As I mentioned before, VGMSlap isn't the fastest player in its current state.
-Here are some tips that may help if your music is lagging or stuttering.
+I am not a trained programmer with an eye for optimization; in fact, this is
+basically only my second ever C program of any meaningful substance.  I hope
+that I will be able to optimize VGMSlap over time as I learn more.  Here are
+some tips that may help if your music is lagging or stuttering.
 
 - For slower machines, you can edit VGMSLAP.CFG and lower the timing resolution
-  by changing the DIVIDER option, but playback accuracy will be reduced.
+  by changing the DIVIDER option, but playback accuracy will be reduced*.
   You probably won't have to set this very high - DIVIDER 2 worked well on a
-  386SX-40 for me, and even just DIVIDER 3 made my 286-12 happy!
+  386SX-40 for me, and even just DIVIDER 3 made my 286-12 happy!  However, there
+  are some systems with unusually slow interrupt handling that might need higher
+  values.  An example of this is my "Pocket386" which despite also having a
+  386SX-40 works best with at least DIVIDER 5!
+  
+   *OK, hopping on the soapbox for a sec.  The reduction in "accuracy" is
+    technically true, but most VGMs are logged from playback engines that have
+	considerably lower resolution than the format's 44100Hz base rate.  As a
+	result, you probably won't actually notice any problems unless you set an
+	absurdly high DIVIDER value (like 255).  Even then, I've found that it
+	mostly just makes fancier percussion instruments a little "clicky".
+	Don't sweat it too much if you need to increase the value. :)
   
 - There is a lot of behind the scenes code that goes into interpreting and
   displaying the OPL channel data.  This is additional CPU overhead and if you
@@ -184,7 +198,7 @@ Here are some tips that may help if your music is lagging or stuttering.
 - VGMSlap runs entirely in real mode and thus currently does not use memory
   above 640k, so VGMs have to be streamed from disk.  Most systems I've tested
   on have been fast enough to handle this without issue, but in the few cases of
-  slower disks, I've had success running VGMSlap and VGMs from a RAM Drive, or
+  slower disks, I've had success running VGMSlap and VGMs from a RAM drive, or
   using SmartDrive caching.
 
 
@@ -193,15 +207,16 @@ Here are some tips that may help if your music is lagging or stuttering.
 - There is probably not as much error checking as would be preferred.  Don't try
   to get cheeky and make VGMSlap do weird things, or else face the consequences!
   
-- At least on my test system, OPL2 is still being detected as OPL3.  I have
-  written VGMSlap to use the "standard" detection methods but they don't seem to
-  work on my only OPL2 card (Sound Blaster 2.0, CT1350B).  It still plays OPL2
-  VGMs correctly, though obviously loading 2xOPL2/OPL3 VGMs is NOT going to
-  sound right.  The detection does work fine in emulation, so I am not sure if
-  it's just my specific setup.
-  This also, to some extent, may apply to 2xOPL2, as I literally do not have any
+- Dual OPL2 detection is effectively untested, as I literally do not have any
   real card to test with.  I got it working in DOSBox, at least.  If you own one
   of these cards, I would be curious to hear about your experience.
+  
+- If your system is REALLY slow, there's a very real chance that VGMSlap will
+  effectively lock up your system - the music will keep going but you won't be
+  able to exit the program until the song finishes.  It's basically unable to
+  detect keypresses because the CPU is so busy.  This is much improved as of R2,
+  but not eliminated.  I'll eventually come up with a solution.  Until then,
+  use this as a sign that you need a higher DIVIDER setting in VGMSLAP.CFG.
 
 
 == [ License Info ] ============================================================
@@ -261,6 +276,7 @@ Email: kyle@wafflenet.com
 Discord: @mrksoft
 Twitter/X: @MrKsoft486
 Mastodon/Fediverse: @mrksoft@bitbang.social
+BlueSky: @mrksoft.bsky.social
 
 PS. If you're looking for VGM files to play in VGMSlap, why not check out
 Wafflenet's very own OPL Archive?  It's an ever-growing collection of VGMs for

@@ -35,8 +35,7 @@
 // Type definitions
 ///////////////////////////////////////////////////////////////////////////////
 
-// Could use Watcom stdint.h as well, but this should allow it to compile in Borland too
-// Also helpful for reducing confusion on # of bytes and signs
+// Use these where possible to reduce bit/signing confusion
 // Example, recall that "char" is default unsigned, but "int" is default signed
 
 typedef unsigned char uint8_t;
@@ -47,7 +46,7 @@ typedef unsigned long uint32_t;
 // Defines and function prototypes
 ///////////////////////////////////////////////////////////////////////////////
 
-#define VGMSLAP_VERSION "R2-pre"
+#define VGMSLAP_VERSION "R2"
 
 // Macro definitions
 
@@ -104,7 +103,7 @@ uint8_t readBytes(uint16_t);
 
 // General program vars
 uint8_t programState = 0;				// Controls current state of program (init, main loop, exit, etc)
-									// 0 = init, 1 = play, 2 = songEnd, 3 = quit
+										// 0 = init, 1 = play, 2 = songEnd, 3 = quit
 
 // Input vars
 uint8_t keyboardCurrent = 0;			// Current keycode from getch()
@@ -282,7 +281,7 @@ typedef struct
 	uint8_t flag4Op;
 	uint8_t panning; // Two bits - (0x03 = both channels, 0x02 = right, 0x01 = left, 0x00 = neither)
 	uint8_t feedback;
-	uint8_t synthesisType; // Aka "Algorithm"
+	uint8_t synthesisType; 	// Aka "Algorithm"
 	uint8_t displayX;		// Channel block location on screen
 	uint8_t displayY;		// Channel block location on screen
 } oplChannel;

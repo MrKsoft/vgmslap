@@ -1,3 +1,22 @@
+== [ Release 2 - 2024/05/18] ===================================================
+
+- Rewrote screen update code to only write screen areas when the actual chip
+  data changes instead of refreshing the whole thing.  Performance is only
+  marginally better overall, but it is much more responsive on under-specced
+  systems.
+- OPL2 detection now actually works outside of emulation.
+- Disabled interrupt timer mistakenly left on while decompressing VGZs, now it
+  completes a lot faster.
+- Improved handling of VGMs that are missing "end of song data" command (0x66)
+- Fixed a mistake in sample position calculation; all commands advanced the
+  position counter even if there were multiple commands in one sample.  This may
+  have been a contributing factor to the DIVIDER configuration setting making
+  complicated VGMs sound weird, so setting a higher DIVIDER should be less of a
+  problem now!
+- Fixed issue where playlist entries would fail to load on some systems.
+- Fixed OPL register/data write delays being reversed.
+- Error messages related to file loading are more descriptive.
+
 == [ Release 1 - 2024/05/05] ===================================================
 
 The very first public release of VGMSlap!
