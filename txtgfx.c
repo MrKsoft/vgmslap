@@ -23,6 +23,24 @@
 #define CHAN_DISP_OFFSET_CHANNEL_FEEDBACK 33
 #define CHAN_DISP_OFFSET_OPERATOR_PARAMETERS 9
 
+// Attribute colors
+#define COLOR_BLACK 0x0
+#define COLOR_BLUE 0x1
+#define COLOR_GREEN 0x2
+#define COLOR_CYAN 0x3
+#define COLOR_RED 0x4
+#define COLOR_MAGENTA 0x5
+#define COLOR_BROWN 0x6
+#define COLOR_LIGHTGREY 0x7
+#define COLOR_DARKGREY 0x8
+#define COLOR_LIGHTBLUE 0x9
+#define COLOR_LIGHTGREEN 0xA
+#define COLOR_LIGHTCYAN 0xB
+#define COLOR_LIGHTRED 0xC
+#define COLOR_LIGHTMAGENTA 0xD
+#define COLOR_YELLOW 0xE
+#define COLOR_WHITE 0xF
+
 // Define special Code Page 437 characters
 
 #define CHAR_MUSIC_NOTE 0x0E

@@ -64,8 +64,8 @@ void clearTextScreen(void);
 void clearInterface(void);
 void setVideoMode(uint16_t);
 void drawTextUI(void);
-void drawCharacterAtPosition(char, uint8_t, uint8_t, uint8_t);
-void drawStringAtPosition(char*, uint8_t, uint8_t, uint8_t);
+void drawCharacterAtPosition(char, uint8_t, uint8_t, uint8_t, uint8_t);
+void drawStringAtPosition(char*, uint8_t, uint8_t, uint8_t, uint8_t);
 void drawGraphicAtPosition(const char*, uint8_t, uint8_t, uint8_t, uint8_t);
 void drawChannelTable(void);
 
@@ -817,91 +817,91 @@ void drawChannelTable(void)
 				if (targetOperator == 0)
 				{
 					// Multiplier
-					drawStringAtPosition(oplMultiplierNames[oplStatus.channels[targetChannel].operators[targetOperator].frequencyMultiplierFactor],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+15,oplStatus.channels[targetChannel].displayY+1,0x0B);
+					drawStringAtPosition(oplMultiplierNames[oplStatus.channels[targetChannel].operators[targetOperator].frequencyMultiplierFactor], oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+15, oplStatus.channels[targetChannel].displayY+1,COLOR_LIGHTCYAN,COLOR_BLACK);
 					
 					// Tremolo
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagTremolo == 1)
 					{
-						drawCharacterAtPosition('T', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+1, 0x07);
+						drawCharacterAtPosition('T', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+1, COLOR_LIGHTGREY, COLOR_BLACK);
 					}
 					else
 					{
-						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+1, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+1, COLOR_DARKGREY, COLOR_BLACK);
 					}
 					
 					// Vibrato
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagFrequencyVibrato == 1)
 					{
-						drawCharacterAtPosition('V', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+1, 0x07);
+						drawCharacterAtPosition('V', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+1, COLOR_LIGHTGREY, COLOR_BLACK);
 					}
 					else
 					{
-						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+1, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+1, COLOR_DARKGREY, COLOR_BLACK);
 					}
 					
 					// Sustain
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagSoundSustaining == 1)
 					{
-						drawCharacterAtPosition('S', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+1, 0x07);
+						drawCharacterAtPosition('S', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+1, COLOR_LIGHTGREY, COLOR_BLACK);
 					}
 					else
 					{
-						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+1, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+1, COLOR_DARKGREY, COLOR_BLACK);
 					}
 					
 					// KSR
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagKSR == 1)
 					{
-						drawCharacterAtPosition('K', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+1, 0x07);
+						drawCharacterAtPosition('K', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+1, COLOR_LIGHTGREY, COLOR_BLACK);
 					}
 					else
 					{
-						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+1, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+1, COLOR_DARKGREY, COLOR_BLACK);
 					}
 				}
 				else if (targetOperator == 1)
 				{
 					// Multiplier
-					drawStringAtPosition(oplMultiplierNames[oplStatus.channels[targetChannel].operators[targetOperator].frequencyMultiplierFactor],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+15,oplStatus.channels[targetChannel].displayY+3,0x0A);
+					drawStringAtPosition(oplMultiplierNames[oplStatus.channels[targetChannel].operators[targetOperator].frequencyMultiplierFactor],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+15,oplStatus.channels[targetChannel].displayY+3,COLOR_LIGHTGREEN, COLOR_BLACK);
 					
 					// Tremolo
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagTremolo == 1)
 					{
-						drawCharacterAtPosition('T', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+3, 0x07);
+						drawCharacterAtPosition('T', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+3, COLOR_LIGHTGREY, COLOR_BLACK);
 					}
 					else
 					{
-						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+3, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+10, oplStatus.channels[targetChannel].displayY+3, COLOR_DARKGREY, COLOR_BLACK);
 					}
 					
 					// Vibrato
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagFrequencyVibrato == 1)
 					{
-						drawCharacterAtPosition('V', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+3, 0x07);
+						drawCharacterAtPosition('V', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+3, COLOR_LIGHTGREY, COLOR_BLACK);
 					}
 					else
 					{
-						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+3, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+11, oplStatus.channels[targetChannel].displayY+3, COLOR_DARKGREY, COLOR_BLACK);
 					}
 					
 					// Sustain
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagSoundSustaining == 1)
 					{
-						drawCharacterAtPosition('S', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+3, 0x07);
+						drawCharacterAtPosition('S', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+3, COLOR_LIGHTGREY, COLOR_BLACK);
 					}
 					else
 					{
-						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+3, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+12, oplStatus.channels[targetChannel].displayY+3, COLOR_DARKGREY, COLOR_BLACK);
 					}
 					
 					// KSR
 					if (oplStatus.channels[targetChannel].operators[targetOperator].flagKSR == 1)
 					{
-						drawCharacterAtPosition('K', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+3, 0x07);
+						drawCharacterAtPosition('K', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+3, COLOR_LIGHTGREY, COLOR_BLACK);
 					}
 					else
 					{
-						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+3, 0x08);
+						drawCharacterAtPosition('-', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+13, oplStatus.channels[targetChannel].displayY+3, COLOR_DARKGREY, COLOR_BLACK);
 					}
 				}
 			}
@@ -930,20 +930,20 @@ void drawChannelTable(void)
 				{
 					// Output level
 					sprintf(txtDrawBuffer, "%.2X", oplStatus.channels[targetChannel].operators[targetOperator].outputLevel);
-					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+21,oplStatus.channels[targetChannel].displayY+1,0x0B);
+					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+21,oplStatus.channels[targetChannel].displayY+1,COLOR_LIGHTCYAN, COLOR_BLACK);
 					
 					// Key Scaling Level
-					drawStringAtPosition(oplKSLNames[oplStatus.channels[targetChannel].operators[targetOperator].keyScaleLevel],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+17,oplStatus.channels[targetChannel].displayY+1,0x0B);
+					drawStringAtPosition(oplKSLNames[oplStatus.channels[targetChannel].operators[targetOperator].keyScaleLevel],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+17,oplStatus.channels[targetChannel].displayY+1,COLOR_LIGHTCYAN, COLOR_BLACK);
 					
 				}
 				else if (targetOperator == 1)
 				{
 					// Output level
 					sprintf(txtDrawBuffer, "%.2X", oplStatus.channels[targetChannel].operators[targetOperator].outputLevel);
-					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+21,oplStatus.channels[targetChannel].displayY+3,0x0A);
+					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+21,oplStatus.channels[targetChannel].displayY+3,COLOR_LIGHTGREEN, COLOR_BLACK);
 					
 					// Key Scaling Level
-					drawStringAtPosition(oplKSLNames[oplStatus.channels[targetChannel].operators[targetOperator].keyScaleLevel],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+17,oplStatus.channels[targetChannel].displayY+3,0x0A);
+					drawStringAtPosition(oplKSLNames[oplStatus.channels[targetChannel].operators[targetOperator].keyScaleLevel],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+17,oplStatus.channels[targetChannel].displayY+3,COLOR_LIGHTGREEN, COLOR_BLACK);
 				}
 			}
 			
@@ -966,13 +966,13 @@ void drawChannelTable(void)
 				
 				if (targetOperator == 0)
 				{
-					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].attackRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+5,oplStatus.channels[targetChannel].displayY+1,0x0B);
-					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].decayRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+6,oplStatus.channels[targetChannel].displayY+1,0x0B);
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].attackRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+5,oplStatus.channels[targetChannel].displayY+1, COLOR_LIGHTCYAN, COLOR_BLACK);
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].decayRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+6,oplStatus.channels[targetChannel].displayY+1,COLOR_LIGHTCYAN, COLOR_BLACK);
 				}
 				else if (targetOperator == 1)
 				{
-					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].attackRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+5,oplStatus.channels[targetChannel].displayY+3,0x0A);
-					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].decayRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+6,oplStatus.channels[targetChannel].displayY+3,0x0A);
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].attackRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+5,oplStatus.channels[targetChannel].displayY+3, COLOR_LIGHTGREEN, COLOR_BLACK);
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].decayRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+6,oplStatus.channels[targetChannel].displayY+3, COLOR_LIGHTGREEN, COLOR_BLACK);
 				}
 			}
 			
@@ -995,13 +995,13 @@ void drawChannelTable(void)
 				
 				if (targetOperator == 0)
 				{
-					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].sustainLevel],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+7,oplStatus.channels[targetChannel].displayY+1,0x0B);
-					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].releaseRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+8,oplStatus.channels[targetChannel].displayY+1,0x0B);
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].sustainLevel],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+7,oplStatus.channels[targetChannel].displayY+1, COLOR_LIGHTCYAN, COLOR_BLACK);
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].releaseRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+8,oplStatus.channels[targetChannel].displayY+1, COLOR_LIGHTCYAN, COLOR_BLACK);
 				}
 				else if (targetOperator == 1)
 				{
-					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].sustainLevel],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+7,oplStatus.channels[targetChannel].displayY+3,0x0A);
-					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].releaseRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+8,oplStatus.channels[targetChannel].displayY+3,0x0A);
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].sustainLevel],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+7,oplStatus.channels[targetChannel].displayY+3, COLOR_LIGHTGREEN, COLOR_BLACK);
+					drawCharacterAtPosition(numToHex[oplStatus.channels[targetChannel].operators[targetOperator].releaseRate],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+8,oplStatus.channels[targetChannel].displayY+3, COLOR_LIGHTGREEN, COLOR_BLACK);
 				}
 			}
 			
@@ -1029,14 +1029,14 @@ void drawChannelTable(void)
 						{
 							// Frequency number
 							sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
-							drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+4,0x0E);
+							drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+4,COLOR_YELLOW,COLOR_BLACK);
 						}
 					}
 					else
 					{
 						// Frequency number
 						sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
-						drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,0x0E);
+						drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,COLOR_YELLOW,COLOR_BLACK);
 					}
 				}
 				// Positioning for 2-op channels
@@ -1044,7 +1044,7 @@ void drawChannelTable(void)
 				{
 					// Frequency number
 					sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
-					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,0x0E);
+					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,COLOR_YELLOW,COLOR_BLACK);
 				}
 			}
 			
@@ -1072,11 +1072,11 @@ void drawChannelTable(void)
 				// Set what color to draw the Note icon with based on whether Key-On was set.
 				if (oplStatus.channels[targetChannel].keyOn == 1)
 				{
-					tempAttribute = 0x0D;
+					tempAttribute = COLOR_LIGHTMAGENTA;
 				}
 				else
 				{
-					tempAttribute = 0x08;
+					tempAttribute = COLOR_DARKGREY;
 				}
 				
 				// Draw
@@ -1090,24 +1090,24 @@ void drawChannelTable(void)
 						{
 							// Block number
 							sprintf(txtDrawBuffer, " %X ", oplStatus.channels[targetChannel].blockNumber);
-							drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+3,0x06);
+							drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+3, COLOR_BROWN, COLOR_BLACK);
 							// Frequency number
 							sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
-							drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+4,0x0E);
+							drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+4, COLOR_YELLOW, COLOR_BLACK);
 							// Key on
-							drawCharacterAtPosition(CHAR_MUSIC_NOTE, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+5, tempAttribute);
+							drawCharacterAtPosition(CHAR_MUSIC_NOTE, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+5, tempAttribute, COLOR_BLACK);
 						}
 					}
 					else
 					{
 						// Block number
 						sprintf(txtDrawBuffer, " %X ", oplStatus.channels[targetChannel].blockNumber);
-						drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+1,0x06);
+						drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+1, COLOR_BROWN, COLOR_BLACK);
 						// Frequency number
 						sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
-						drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,0x0E);
+						drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2, COLOR_YELLOW, COLOR_BLACK);
 						// Key on
-						drawCharacterAtPosition(CHAR_MUSIC_NOTE, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute);
+						drawCharacterAtPosition(CHAR_MUSIC_NOTE, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute, COLOR_BLACK);
 					}
 				}
 				// Positioning for 2-op channels
@@ -1115,12 +1115,12 @@ void drawChannelTable(void)
 				{
 					// Block number
 					sprintf(txtDrawBuffer, " %X ", oplStatus.channels[targetChannel].blockNumber);
-					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+1,0x06);
+					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+1, COLOR_BROWN, COLOR_BLACK);
 					// Frequency number
 					sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
-					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,0x0E);
+					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2, COLOR_YELLOW, COLOR_BLACK);
 					// Key on
-					drawCharacterAtPosition(CHAR_MUSIC_NOTE, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute);
+					drawCharacterAtPosition(CHAR_MUSIC_NOTE, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute, COLOR_BLACK);
 				}
 			}
 			
@@ -1153,20 +1153,20 @@ void drawChannelTable(void)
 						// Left
 						if ((oplStatus.channels[targetChannel].panning & 0x01) == 1)
 						{
-							drawCharacterAtPosition('(', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+3), 0xF);		
+							drawCharacterAtPosition('(', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+3), COLOR_WHITE, COLOR_BLACK);		
 						}
 						else
 						{
-							drawCharacterAtPosition('(', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+3), 0x8);
+							drawCharacterAtPosition('(', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+3), COLOR_DARKGREY, COLOR_BLACK);
 						}
 						// Right
 						if ((oplStatus.channels[targetChannel].panning & 0x02) == 2)
 						{
-							drawCharacterAtPosition(')', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+3), 0xF);		
+							drawCharacterAtPosition(')', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+3), COLOR_WHITE, COLOR_BLACK);		
 						}
 						else
 						{
-							drawCharacterAtPosition(')', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+3), 0x8);
+							drawCharacterAtPosition(')', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+3), COLOR_DARKGREY, COLOR_BLACK);
 						}
 					}
 					else if (oplStatus.channels[targetChannel].flag4Op != 0)
@@ -1177,20 +1177,20 @@ void drawChannelTable(void)
 							// Left
 							if ((oplStatus.channels[targetChannel].panning & 0x01) == 1)
 							{
-								drawCharacterAtPosition('(', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+5), 0xF);
+								drawCharacterAtPosition('(', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+5), COLOR_WHITE, COLOR_BLACK);
 							}
 							else
 							{
-								drawCharacterAtPosition('(', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+5), 0x8);
+								drawCharacterAtPosition('(', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO, (oplStatus.channels[targetChannel].displayY+5), COLOR_DARKGREY, COLOR_BLACK);
 							}
 							// Right
 							if ((oplStatus.channels[targetChannel].panning & 0x02) == 2)
 							{
-								drawCharacterAtPosition(')', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+5), 0xF);						
+								drawCharacterAtPosition(')', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+5), COLOR_WHITE, COLOR_BLACK);						
 							}
 							else
 							{
-								drawCharacterAtPosition(')', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+5), 0x8);
+								drawCharacterAtPosition(')', oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+2, (oplStatus.channels[targetChannel].displayY+5), COLOR_DARKGREY, COLOR_BLACK);
 							}
 						}
 					}
@@ -1216,12 +1216,12 @@ void drawChannelTable(void)
 					if (targetChannel <= 2 || (targetChannel >= 9 && targetChannel <= 11))
 					{
 						// Clean up previously written text from switching between 2/4op
-						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[targetChannel].displayY+2,0x00);
-						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[targetChannel].displayY+6,0x00);
-						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+1,0x00);
-						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2,0x00);
-						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+6,0x00);
-						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+7,0x00);
+						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[targetChannel].displayY+2, COLOR_BLACK, COLOR_BLACK);
+						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[targetChannel].displayY+6, COLOR_BLACK, COLOR_BLACK);
+						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+1, COLOR_BLACK, COLOR_BLACK);
+						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2, COLOR_BLACK, COLOR_BLACK);
+						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+6, COLOR_BLACK, COLOR_BLACK);
+						drawStringAtPosition("   ",oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+7, COLOR_BLACK, COLOR_BLACK);
 						
 						// FM+FM
 						if(oplStatus.channels[targetChannel].synthesisType == 0 && oplStatus.channels[targetChannel+3].synthesisType == 0 )
@@ -1249,14 +1249,14 @@ void drawChannelTable(void)
 				// Draw Feedback
 				if (oplStatus.channels[targetChannel].flag4Op == 0)
 				{
-					drawStringAtPosition(oplFeedbackNames[oplStatus.channels[targetChannel].feedback],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[targetChannel].displayY+2,0x0E);	
+					drawStringAtPosition(oplFeedbackNames[oplStatus.channels[targetChannel].feedback],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[targetChannel].displayY+2, COLOR_YELLOW, COLOR_BLACK);	
 					
 				}
 				else if (oplStatus.channels[targetChannel].flag4Op != 0)
 				{
 					if (targetChannel <= 2 || (targetChannel >= 9 && targetChannel <= 11))
 					{
-					drawStringAtPosition(oplFeedbackNames[oplStatus.channels[targetChannel].feedback],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[targetChannel].displayY+4,0x0E);
+					drawStringAtPosition(oplFeedbackNames[oplStatus.channels[targetChannel].feedback],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS+24,oplStatus.channels[targetChannel].displayY+4, COLOR_YELLOW, COLOR_BLACK);
 					}
 				}
 			}
@@ -1287,11 +1287,11 @@ void drawChannelTable(void)
 				
 				if (targetOperator == 0)
 				{
-					drawStringAtPosition(oplWaveformNames[oplStatus.channels[targetChannel].operators[targetOperator].waveform],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS,oplStatus.channels[targetChannel].displayY+1,0x0B);
+					drawStringAtPosition(oplWaveformNames[oplStatus.channels[targetChannel].operators[targetOperator].waveform],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS,oplStatus.channels[targetChannel].displayY+1, COLOR_LIGHTCYAN, COLOR_BLACK);
 				}
 				else if (targetOperator == 1)
 				{
-					drawStringAtPosition(oplWaveformNames[oplStatus.channels[targetChannel].operators[targetOperator].waveform],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS,oplStatus.channels[targetChannel].displayY+3,0x0A);
+					drawStringAtPosition(oplWaveformNames[oplStatus.channels[targetChannel].operators[targetOperator].waveform],oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_OPERATOR_PARAMETERS,oplStatus.channels[targetChannel].displayY+3, COLOR_LIGHTGREEN, COLOR_BLACK);
 				}
 			}
 			
@@ -1339,30 +1339,30 @@ void drawChannelTable(void)
 						
 						if (oplStatus.channels[j].flag4Op == 1)
 						{
-							drawStringAtPosition("4OP", oplStatus.channels[j].displayX+36, oplStatus.channels[j].displayY, 0x0C);
+							drawStringAtPosition("4OP", oplStatus.channels[j].displayX+36, oplStatus.channels[j].displayY, COLOR_LIGHTRED, COLOR_BLACK);
 							if (j == 0)
 							{
-								drawStringAtPosition("01+04", oplStatus.channels[0].displayX+2, oplStatus.channels[0].displayY, 0x0F);
+								drawStringAtPosition("01+04", oplStatus.channels[0].displayX+2, oplStatus.channels[0].displayY, COLOR_WHITE, COLOR_BLACK);
 							}
 							else if (j == 1)
 							{
-								drawStringAtPosition("02+05", oplStatus.channels[1].displayX+2, oplStatus.channels[1].displayY, 0x0F);
+								drawStringAtPosition("02+05", oplStatus.channels[1].displayX+2, oplStatus.channels[1].displayY, COLOR_WHITE, COLOR_BLACK);
 							}
 							else if (j == 2)
 							{
-								drawStringAtPosition("03+06", oplStatus.channels[2].displayX+2, oplStatus.channels[2].displayY, 0x0F);
+								drawStringAtPosition("03+06", oplStatus.channels[2].displayX+2, oplStatus.channels[2].displayY, COLOR_WHITE, COLOR_BLACK);
 							}
 							else if (j == 9)
 							{
-								drawStringAtPosition("10+13", oplStatus.channels[9].displayX+2, oplStatus.channels[9].displayY, 0x0F);
+								drawStringAtPosition("10+13", oplStatus.channels[9].displayX+2, oplStatus.channels[9].displayY, COLOR_WHITE, COLOR_BLACK);
 							}
 							else if (j == 10)
 							{
-								drawStringAtPosition("11+14", oplStatus.channels[10].displayX+2, oplStatus.channels[10].displayY, 0x0F);
+								drawStringAtPosition("11+14", oplStatus.channels[10].displayX+2, oplStatus.channels[10].displayY, COLOR_WHITE, COLOR_BLACK);
 							}
 							else if (j == 11)
 							{
-								drawStringAtPosition("12+15", oplStatus.channels[11].displayX+2, oplStatus.channels[11].displayY, 0x0F);
+								drawStringAtPosition("12+15", oplStatus.channels[11].displayX+2, oplStatus.channels[11].displayY, COLOR_WHITE, COLOR_BLACK);
 							}
 						}
 					}
@@ -1373,8 +1373,8 @@ void drawChannelTable(void)
 						{
 							
 							sprintf(txtDrawBuffer, "Ch.%02d", j+1);
-							drawStringAtPosition(txtDrawBuffer, oplStatus.channels[j].displayX+2, oplStatus.channels[j].displayY, 0x0F);
-							drawStringAtPosition("\xCD\xCD\xCD", oplStatus.channels[j].displayX+36, oplStatus.channels[j].displayY, 0x08);
+							drawStringAtPosition(txtDrawBuffer, oplStatus.channels[j].displayX+2, oplStatus.channels[j].displayY, COLOR_WHITE, COLOR_BLACK);
+							drawStringAtPosition("\xCD\xCD\xCD", oplStatus.channels[j].displayX+36, oplStatus.channels[j].displayY, COLOR_DARKGREY, COLOR_BLACK);
 						}					
 					}
 				}
@@ -1390,22 +1390,22 @@ void drawChannelTable(void)
 							// Skip the channel number location
 							if ( k<2 || k>6 )
 							{	// Draw horizontal line
-								drawCharacterAtPosition(CHAR_BOX_DOUBLE_HORIZONTAL, oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY, 0x08);
+								drawCharacterAtPosition(CHAR_BOX_DOUBLE_HORIZONTAL, oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY, COLOR_DARKGREY, COLOR_BLACK);
 							}
 						}
 						// Draw corner pieces
-						drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_RIGHT_DOUBLE, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY, 0x08);
-						drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_LEFT_DOUBLE, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY, 0x08);
+						drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_RIGHT_DOUBLE, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY, COLOR_DARKGREY, COLOR_BLACK);
+						drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_LEFT_DOUBLE, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY, COLOR_DARKGREY, COLOR_BLACK);
 						// Clear extra characters that may have been left behind in 2-op mode
 						if (oplStatus.channels[j].flag4Op == 1)
 						{
-							drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY+4, 0x08);
-							drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY+4, 0x08);
+							drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY+4, COLOR_DARKGREY, COLOR_BLACK);
+							drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY+4, COLOR_DARKGREY, COLOR_BLACK);
 							for (k=8; k<33; k++)
 							{
-								drawCharacterAtPosition(' ', oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY+4, 0x08);
+								drawCharacterAtPosition(' ', oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY+4, COLOR_BLACK, COLOR_BLACK);
 							}
-							drawCharacterAtPosition(' ', oplStatus.channels[j].displayX+35, oplStatus.channels[j].displayY+4, 0x08);
+							drawCharacterAtPosition(' ', oplStatus.channels[j].displayX+35, oplStatus.channels[j].displayY+4, COLOR_BLACK, COLOR_BLACK);
 						}
 						
 					}
@@ -1420,12 +1420,12 @@ void drawChannelTable(void)
 								if ( k<2 || k>6 )
 								{
 									// Draw horizontal line
-									drawCharacterAtPosition(CHAR_BOX_DOUBLE_HORIZONTAL, oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY, 0x08);
+									drawCharacterAtPosition(CHAR_BOX_DOUBLE_HORIZONTAL, oplStatus.channels[j].displayX+k, oplStatus.channels[j].displayY, COLOR_DARKGREY, COLOR_BLACK);
 								}
 							}
 							// Draw corner pieces
-							drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_RIGHT_DOUBLE, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY, 0x08);
-							drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_LEFT_DOUBLE, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY, 0x08);
+							drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_RIGHT_DOUBLE, oplStatus.channels[j].displayX, oplStatus.channels[j].displayY, COLOR_DARKGREY, COLOR_BLACK);
+							drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_LEFT_DOUBLE, oplStatus.channels[j].displayX+39, oplStatus.channels[j].displayY, COLOR_DARKGREY, COLOR_BLACK);
 						}
 					}
 				}
@@ -1464,38 +1464,38 @@ void drawTextUI(void)
 	// Blue bar at top
 	for (i=0; i<55; i++)
 	{
-		drawStringAtPosition(" ",i,0,0x1F);
+		drawStringAtPosition(" ",i,0,COLOR_WHITE,COLOR_BLUE);
 	}
 	sprintf(txtDrawBuffer, "VGMSlap! %s", VGMSLAP_VERSION);
-	drawStringAtPosition(txtDrawBuffer,0,0,0x1F);
+	drawStringAtPosition(txtDrawBuffer,0,0,COLOR_WHITE,COLOR_BLUE);
 	if (playlistMode == 0)
 	{
-		drawStringAtPosition("Now playing:             ",55,0,0x1F);
-		drawStringAtPosition(basename(fileName),68,0,0x1E);
+		drawStringAtPosition("Now playing:             ",55,0,COLOR_WHITE,COLOR_BLUE);
+		drawStringAtPosition(basename(fileName),68,0,COLOR_YELLOW,COLOR_BLUE);
 	}
 	else if (playlistMode == 1)
 	{
-		drawStringAtPosition("Playlist:               ",55,0,0x1F);
+		drawStringAtPosition("Playlist:               ",55,0,COLOR_WHITE,COLOR_BLUE);
 		sprintf(txtDrawBuffer, "[%5u / %5u]", playlistLineNumber, playlistMax);
-		drawStringAtPosition(txtDrawBuffer,65,0,0x1E);
+		drawStringAtPosition(txtDrawBuffer,65,0,COLOR_YELLOW,COLOR_BLUE);
 	}
 	
 	// GD3 tag info
-	drawStringAtPosition("Title:  ",GD3_LABEL_START_X,GD3_START_Y,0x07);
+	drawStringAtPosition("Title:  ",GD3_LABEL_START_X,GD3_START_Y,COLOR_LIGHTGREY,COLOR_BLACK);
 	sprintf(txtDrawBuffer, "%S", currentGD3Tag.trackNameE);
-	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y,0x0B);
+	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y,COLOR_LIGHTCYAN,COLOR_BLACK);
 	
-	drawStringAtPosition("Artist: ",GD3_LABEL_START_X,GD3_START_Y+1,0x07);
+	drawStringAtPosition("Artist: ",GD3_LABEL_START_X,GD3_START_Y+1,COLOR_LIGHTGREY,COLOR_BLACK);
 	sprintf(txtDrawBuffer, "%S", currentGD3Tag.originalAuthorE);
-	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+1,0x0B);
+	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+1,COLOR_LIGHTCYAN,COLOR_BLACK);
 	
-	drawStringAtPosition("Game:   ",GD3_LABEL_START_X,GD3_START_Y+2,0x07);
+	drawStringAtPosition("Game:   ",GD3_LABEL_START_X,GD3_START_Y+2,COLOR_LIGHTGREY,COLOR_BLACK);
 	sprintf(txtDrawBuffer, "%S", currentGD3Tag.gameNameE);
-	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+2,0x0B);
+	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+2,COLOR_LIGHTCYAN,COLOR_BLACK);
 	
-	drawStringAtPosition("Date:   ",GD3_LABEL_START_X,GD3_START_Y+3,0x07);
+	drawStringAtPosition("Date:   ",GD3_LABEL_START_X,GD3_START_Y+3,COLOR_LIGHTGREY,COLOR_BLACK);
 	sprintf(txtDrawBuffer, "%S", currentGD3Tag.releaseDate);
-	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+3,0x0B);
+	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+3,COLOR_LIGHTCYAN,COLOR_BLACK);
 	
 	// Set positions for the channels (remember, they're out of order due to OPL3 pairing)
 	for (i=0; i<9; i++)
@@ -1537,8 +1537,8 @@ void drawTextUI(void)
 		{
 			// Initial channel numbers
 			sprintf(txtDrawBuffer, "Ch.%02d", i+1);
-			drawStringAtPosition(txtDrawBuffer, oplStatus.channels[i].displayX+2, oplStatus.channels[i].displayY, 0x0F);
-			drawStringAtPosition("\xCD\xCD\xCD", oplStatus.channels[i].displayX+36, oplStatus.channels[i].displayY, 0x08);
+			drawStringAtPosition(txtDrawBuffer, oplStatus.channels[i].displayX+2, oplStatus.channels[i].displayY, COLOR_WHITE, COLOR_BLACK);
+			drawStringAtPosition("\xCD\xCD\xCD", oplStatus.channels[i].displayX+36, oplStatus.channels[i].displayY, COLOR_DARKGREY, COLOR_BLACK);
 			
 			// Initial horizontal lines
 			// Will be redrawn if we change to 4op mode
@@ -1547,40 +1547,40 @@ void drawTextUI(void)
 				// Skip the channel number location
 				if ( j<2 || j>6 )
 				{	// Draw horizontal line
-					drawCharacterAtPosition(CHAR_BOX_DOUBLE_HORIZONTAL, oplStatus.channels[i].displayX+j, oplStatus.channels[i].displayY, 0x08);
+					drawCharacterAtPosition(CHAR_BOX_DOUBLE_HORIZONTAL, oplStatus.channels[i].displayX+j, oplStatus.channels[i].displayY, COLOR_DARKGREY, COLOR_BLACK);
 				}
 			}
 			// Draw corner pieces
-			drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_RIGHT_DOUBLE, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY, 0x08);
-			drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_LEFT_DOUBLE, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_RIGHT_DOUBLE, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY, COLOR_DARKGREY, COLOR_BLACK);
+			drawCharacterAtPosition(CHAR_BOX_DOWN_SINGLE_LEFT_DOUBLE, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY, COLOR_DARKGREY, COLOR_BLACK);
 		}
 		
 		// Some vertical lines (these never change)
 		for (i=0; i<maxChannels; i++)
 		{
-			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY+1, 0x08);
-			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY+2, 0x08);
-			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY+3, 0x08);
-			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY+1, 0x08);
-			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY+2, 0x08);
-			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY+3, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY+1, COLOR_DARKGREY, COLOR_BLACK);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY+2, COLOR_DARKGREY, COLOR_BLACK);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX, oplStatus.channels[i].displayY+3, COLOR_DARKGREY, COLOR_BLACK);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY+1, COLOR_DARKGREY, COLOR_BLACK);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY+2, COLOR_DARKGREY, COLOR_BLACK);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_VERTICAL, oplStatus.channels[i].displayX+39, oplStatus.channels[i].displayY+3, COLOR_DARKGREY, COLOR_BLACK);
 		}
 		
 		// Bottom of channel display (never changes)
 		
-		drawCharacterAtPosition(CHAR_BOX_UP_SINGLE_RIGHT_SINGLE, oplStatus.channels[8].displayX, oplStatus.channels[8].displayY+4, 0x08);
-		drawCharacterAtPosition(CHAR_BOX_UP_SINGLE_LEFT_SINGLE, oplStatus.channels[8].displayX+39, oplStatus.channels[8].displayY+4, 0x08);
+		drawCharacterAtPosition(CHAR_BOX_UP_SINGLE_RIGHT_SINGLE, oplStatus.channels[8].displayX, oplStatus.channels[8].displayY+4, COLOR_DARKGREY, COLOR_BLACK);
+		drawCharacterAtPosition(CHAR_BOX_UP_SINGLE_LEFT_SINGLE, oplStatus.channels[8].displayX+39, oplStatus.channels[8].displayY+4, COLOR_DARKGREY, COLOR_BLACK);
 		for (i=1; i<39; i++)
 		{
-			drawCharacterAtPosition(CHAR_BOX_SINGLE_HORIZONTAL, oplStatus.channels[8].displayX+i, oplStatus.channels[8].displayY+4, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_SINGLE_HORIZONTAL, oplStatus.channels[8].displayX+i, oplStatus.channels[8].displayY+4, COLOR_DARKGREY, COLOR_BLACK);
 		}
 		if (maxChannels > 9)
 		{
-			drawCharacterAtPosition(CHAR_BOX_UP_SINGLE_RIGHT_SINGLE, oplStatus.channels[17].displayX, oplStatus.channels[17].displayY+4, 0x08);
-			drawCharacterAtPosition(CHAR_BOX_UP_SINGLE_LEFT_SINGLE, oplStatus.channels[17].displayX+39, oplStatus.channels[17].displayY+4, 0x08);
+			drawCharacterAtPosition(CHAR_BOX_UP_SINGLE_RIGHT_SINGLE, oplStatus.channels[17].displayX, oplStatus.channels[17].displayY+4, COLOR_DARKGREY, COLOR_BLACK);
+			drawCharacterAtPosition(CHAR_BOX_UP_SINGLE_LEFT_SINGLE, oplStatus.channels[17].displayX+39, oplStatus.channels[17].displayY+4, COLOR_DARKGREY, COLOR_BLACK);
 			for (i=1; i<39; i++)
 			{
-				drawCharacterAtPosition(CHAR_BOX_SINGLE_HORIZONTAL, oplStatus.channels[17].displayX+i, oplStatus.channels[8].displayY+4, 0x08);
+				drawCharacterAtPosition(CHAR_BOX_SINGLE_HORIZONTAL, oplStatus.channels[17].displayX+i, oplStatus.channels[8].displayY+4, COLOR_DARKGREY, COLOR_BLACK);
 			}
 		}
 	}
@@ -1630,8 +1630,10 @@ void setVideoMode(uint16_t mode)
 }
 
 // Put a character directly into memory at a given coordinate
-void drawCharacterAtPosition(char text, uint8_t xPos, uint8_t yPos, uint8_t attribute)
+void drawCharacterAtPosition(char text, uint8_t xPos, uint8_t yPos, uint8_t foregroundColor, uint8_t backgroundColor)
 {
+	// Combine foreground and background attribute
+	uint8_t attribute = foregroundColor | (backgroundColor << 4);
 	// Generate the correct memory location to put the text using our predefined coordinate function
 	uint16_t screenAddress = characterCoordinate(xPos, yPos);
 	textScreen[screenAddress++] = text;
@@ -1639,8 +1641,11 @@ void drawCharacterAtPosition(char text, uint8_t xPos, uint8_t yPos, uint8_t attr
 }
 
 // Put a full string directly into memory at a given coordinate
-void drawStringAtPosition(char* text, uint8_t xPos, uint8_t yPos, uint8_t attribute)
+void drawStringAtPosition(char* text, uint8_t xPos, uint8_t yPos, uint8_t foregroundColor, uint8_t backgroundColor)
 {
+	
+	// Combine foreground and background attribute
+	uint8_t attribute = foregroundColor | (backgroundColor << 4);
 	// Generate the correct memory location to put the text using our predefined coordinate function
 	uint16_t screenAddress = characterCoordinate(xPos, yPos);
 	while (*text)
@@ -1683,7 +1688,7 @@ void clearTextScreen(void)
 	{
 		for (column = 0; column < 80; column++)
 		{
-		drawCharacterAtPosition(' ',column,row,0xE);
+		drawCharacterAtPosition(' ',column,row,COLOR_LIGHTGREY,COLOR_BLACK);
 		}
 	}
 }
@@ -1699,7 +1704,7 @@ void clearInterface(void)
 	{
 		for (column = GD3_TAG_START_X; column < 80; column++)
 		{
-		drawCharacterAtPosition(' ',column,row,0xE);
+		drawCharacterAtPosition(' ',column,row,COLOR_LIGHTGREY,COLOR_BLACK);
 		}
 	}
 	
@@ -1710,7 +1715,7 @@ void clearInterface(void)
 	{
 		for (column = (CHAN_TABLE_START_X+40); column < 80; column++)
 		{
-		drawCharacterAtPosition(' ',column,row,0xE);
+		drawCharacterAtPosition(' ',column,row,COLOR_LIGHTGREY,COLOR_BLACK);
 		}
 	}
 }
