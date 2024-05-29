@@ -432,7 +432,10 @@ int main(int argc, char** argv)
 		{
 			// Reset OPL, force screen redraw to set things back to default state
 			resetOPL();
-			drawChannelTable();
+			if (settings.struggleBus == 0)
+			{
+				drawChannelTable();
+			}
 			
 			// Free loaded file pointer
 			fclose(vgmFilePointer);
@@ -561,7 +564,14 @@ void initPlayback(void)
 	resetOPL();
 	
 	// Reset screen state
-	setVideoMode(50);
+	if (settings.struggleBus == 0)
+	{
+		setVideoMode(50);
+	}
+	else
+	{
+		setVideoMode(25);
+	}
 	clearTextScreen();
 	
 	// Draw static parts of the UI
@@ -584,8 +594,12 @@ void initPlayback(void)
 		writeOPL(0x105,0x01);
 	}
 	
+	
 	// Draw initial OPL state
-	drawChannelTable();
+	if (settings.struggleBus == 0)
+	{
+		drawChannelTable();
+	}
 	
 	// Set interrupt timer if it hasn't already been done
 	if (fastTickRate == 0)
