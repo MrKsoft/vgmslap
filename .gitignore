@@ -7,6 +7,8 @@
 *.[Ee][Xx][Ee]
 *.[Pp][Ll][Ss]
 *.[Ll][Nn][Kk]
+*.[Cc][Oo][Nn][Ff]
+*.kate-swp
 _BUILD.BAT
 _build.sh
 _RUN.BAT

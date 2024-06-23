@@ -23,7 +23,7 @@
 #include <i86.h>
 #include <libgen.h>
 #include <string.h>
-#include "zlib/zlib.h"
+#include "deps/zlib.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Other source file includes

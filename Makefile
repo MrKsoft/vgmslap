@@ -14,8 +14,9 @@ $(TARGET): $(OBJFILES)
 
 clean: .SYMBOLIC
     rm -f *.obj
+    rm -f *.o
     rm -f $(TARGET)
     @echo Cleanup complete!
     
 .c.obj:
-    wcc $(CFLAGS) $^&
+    wcc $(CFLAGS) -fo=.obj $^&
