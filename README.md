@@ -7,11 +7,7 @@ See the program readme (VGMSLAP.TXT) for additional info.
 
 ## Building
 
-VGMSlap is written with **Open Watcom C 2.0** in mind.  Assuming you're on DOS/Windows and you have your Watcom environment variables and PATH set correctly, the following command should build VGMSLAP.EXE:
-
-    WCL -bt=dos -mm -wx -otexan -fe=vgmslap.exe vgmslap.c ./zlib/zlib.lib
-
-You may need to modify this slightly if cross-compiling from Linux (probably just the path to zlib.lib).
+VGMSlap is written with **Open Watcom C 2.0** in mind.  Assuming you have your Watcom environment variables and PATH set correctly, just run **wmake**.
 
 ## Licenses
 
