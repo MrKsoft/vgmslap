@@ -6,9 +6,11 @@
 *.[Oo][Bb][Jj]
 *.[Ee][Xx][Ee]
 *.[Pp][Ll][Ss]
+*.[Ll][Nn][Kk]
 _BUILD.BAT
+_build.sh
 _RUN.BAT
-zlib-1.2.11/
+_run.sh
 backup/
 notes/
 releases/
