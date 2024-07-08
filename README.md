@@ -7,7 +7,7 @@ See the program readme (VGMSLAP.TXT) for additional info.
 
 ## Building
 
-VGMSlap is written with **Open Watcom C 2.0** in mind.  Assuming you have your Watcom environment variables and PATH set correctly, just run **wmake**.
+VGMSlap is written with **Open Watcom C 2.0** in mind.  Assuming you have your Watcom environment variables and PATH set correctly, just run `wmake` from the source directory to create `vgmslap.exe`.
 
 ## Licenses
 

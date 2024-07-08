@@ -1,68 +1,35 @@
 ///////////////////////////////////////////////////////////////////////////////
-// __      _______ __  __  _____ _             _ 
+// __      _______ __  __  _____ _             _
 // \ \    / / ____|  \/  |/ ____| |           | |
 //  \ \  / / |  __| \  / | (___ | | __ _ _ __ | |
-//   \ \/ /| | |_ | |\/| |\___ \| |/ _` | '_ \| |   by Wafflenet, 2023-2024
+//   \ \/ /| | |_ | |\/| |\___ \| |/ _` | '_ \| |         by Wafflenet
 //    \  / | |__| | |  | |____) | | (_| | |_) |_|       www.wafflenet.com
 //     \/   \_____|_|  |_|_____/|_|\__,_| .__/(_)
-//      (VGM Silly Little AdLib Player) | |      
-//                                      |_|      
+//      (VGM Silly Little AdLib Player) | |
+//                                      |_|
+//
+///////////////////////////////////////////////////////////////////////////////
+//
+// TXTGFX.C - Text mode resources
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// Text elements for VGMSlap's UI
+#include "txtgfx.h"
 
-// Starting coordinates for various channel table elements
-#define GD3_LABEL_START_X 0
-#define GD3_TAG_START_X 8
-#define GD3_START_Y 2
+///////////////////////////////////////////////////////////////////////////////
+// Initialize values
+///////////////////////////////////////////////////////////////////////////////
 
-#define CHAN_TABLE_START_X 0
-#define CHAN_TABLE_START_Y 7
-#define CHAN_DISP_OFFSET_CHANNEL_NOTEINFO 36
-#define CHAN_DISP_OFFSET_CHANNEL_FEEDBACK 33
-#define CHAN_DISP_OFFSET_OPERATOR_PARAMETERS 9
-
-// Attribute colors
-#define COLOR_BLACK 0x0
-#define COLOR_BLUE 0x1
-#define COLOR_GREEN 0x2
-#define COLOR_CYAN 0x3
-#define COLOR_RED 0x4
-#define COLOR_MAGENTA 0x5
-#define COLOR_BROWN 0x6
-#define COLOR_LIGHTGREY 0x7
-#define COLOR_DARKGREY 0x8
-#define COLOR_LIGHTBLUE 0x9
-#define COLOR_LIGHTGREEN 0xA
-#define COLOR_LIGHTCYAN 0xB
-#define COLOR_LIGHTRED 0xC
-#define COLOR_LIGHTMAGENTA 0xD
-#define COLOR_YELLOW 0xE
-#define COLOR_WHITE 0xF
-
-// Define special Code Page 437 characters
-
-#define CHAR_MUSIC_NOTE 0x0E
-#define CHAR_BOX_SINGLE_HORIZONTAL 0xC4
-#define CHAR_BOX_DOUBLE_HORIZONTAL 0xCD
-#define CHAR_BOX_SINGLE_VERTICAL 0xB3
-#define CHAR_BOX_UP_SINGLE_RIGHT_SINGLE 0xC0
-#define CHAR_BOX_UP_SINGLE_LEFT_SINGLE 0xD9
-#define CHAR_BOX_DOWN_SINGLE_LEFT_DOUBLE 0xB8
-#define CHAR_BOX_DOWN_SINGLE_RIGHT_DOUBLE 0xD5
-
-// Text identifiers for each waveform type, to be printed in the operator display
 char oplWaveformNames[8][5] = {
-	"/\x5C\/\x5C", 
-	"^-^-", 
-	"^^^^", 
-	"/\x1C/\x1C", 
-	"^v--", 
-	"^^--", 
-	"\xA9\xAA__", 
-	"-\xFB\x5C-"};	
-// Text identifiers for each synthesis/algorithm type, to be printed in the channel display (not currently used)
+	"/\x5C\/\x5C",
+	"^-^-",
+	"^^^^",
+	"/\x1C/\x1C",
+	"^v--",
+	"^^--",
+	"\xA9\xAA__",
+	"-\xFB\x5C-"};
+
 char oplAlgorithmNames[6][6] = {
 	"FM   ",		// 2 op  1+2
 	"AS   ",		// 2 op  1>2
@@ -70,7 +37,7 @@ char oplAlgorithmNames[6][6] = {
 	"AS-FM",		// 4-op  1+(2>3>4)
 	"FM-AS",		// 4-op  (1>2)+(3>4)
 	"AS-AS"};		// 4-op  (2>3)+4
-// Text identifiers for each feedback type, to be printed in the channel display
+
 char oplFeedbackNames[8][3] = {
 	" 0",
 	"\xF6\x46", // div 16
@@ -80,13 +47,13 @@ char oplFeedbackNames[8][3] = {
 	"\xF6\x31", // div 1
 	"x2",
 	"x4"};
-// Text identifiers for each KSL level, to be printed in the operator display
+
 char oplKSLNames[4][4] = {
 	"---",
 	"1.5",
 	"3.0",
 	"6.0"};
-// Text identifiers for each frequency multiplication level, to be printed in the operator display
+
 char oplMultiplierNames[16][2] = {
 	"\xAB",
 	"1",
@@ -105,16 +72,9 @@ char oplMultiplierNames[16][2] = {
 	"F",
 	"F"};
 
-char boolIndicator[2][2] = {	// Text identifiers for boolean display values
+char boolIndicator[2][2] = {
 	"-",
 	"\xFB"};
-
-// "Text Graphics"
-// They are stored as arrays, characters followed by attribute colors
-// When drawn using the drawCharacterGraphic function, the width and height are passed to it and it uses that to calculate where the text ends and attribute begins.
-// There are certainly better ways to do this, but this way is mine!
-
-// 2-op algorithm illustrations - 7x3
 
 const char tgAlgoFM[] = {
 	// Character
@@ -137,8 +97,6 @@ const char tgAlgoAS[] = {
 	0x00, 0x00, 0x00, 0x07, 0x07, 0x07, 0x0E,
 	0x0A, 0x07, 0x07, 0x07, 0x00, 0x00, 0x00
 };
-
-// 4-op algorithm illustrations - 7x7
 
 const char tgAlgoFMFM[] = {
 	// Character

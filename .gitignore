@@ -8,11 +8,10 @@
 *.[Pp][Ll][Ss]
 *.[Ll][Nn][Kk]
 *.[Cc][Oo][Nn][Ff]
+*.[Bb][Aa][Tt]
+*.[Ss][Hh]
 *.kate-swp
-_BUILD.BAT
-_build.sh
-_RUN.BAT
-_run.sh
 backup/
 notes/
 releases/
+build/
