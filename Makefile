@@ -10,7 +10,7 @@ CFLAGS  = -bt=dos -mm -wx -otexan
 all: $(TARGET) .SYMBOLIC
 
 $(TARGET): $(OBJFILES)
-    wcl $(CFLAGS) -fe=$(TARGET) $(OBJFILES)
+    *wcl $(CFLAGS) -fe=$(TARGET) $(OBJFILES)
 
 clean: .SYMBOLIC
     rm -f *.obj
