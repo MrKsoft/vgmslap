@@ -610,7 +610,40 @@ void drawChannelTable(void)
 				oplStatus.channels[14].flag4Op = oplRegisterMap[0x104] & 0x20 >> 5;
 
 				// After changing 4-op flags, force redraw of things that may need repositioning or changed
-				// (Only on the first channel of each 4-op pair)
+				
+				// Recalculate Y positions of channels
+				// Go in channel number order if we are in 2-op
+				if (oplStatus.channels[0].flag4Op == FALSE && oplStatus.channels[1].flag4Op == FALSE && oplStatus.channels[2].flag4Op == FALSE && oplStatus.channels[9].flag4Op == FALSE && oplStatus.channels[10].flag4Op == FALSE && oplStatus.channels[11].flag4Op == FALSE)
+				{
+					// Set default Y positions for channels (2-op in-order)
+					for (j=0; j<18; j++)
+					{
+						if (j < 9)
+						{
+							oplStatus.channels[j].displayY = CHAN_TABLE_START_Y+(j*4);
+						}
+						else
+						{
+							oplStatus.channels[j].displayY = CHAN_TABLE_START_Y+((j-9)*4);				
+						}
+					}
+				}
+				// If any channels switch to 4-op, use the 4-op ordering
+				if (oplStatus.channels[0].flag4Op == TRUE || oplStatus.channels[1].flag4Op == TRUE || oplStatus.channels[2].flag4Op == TRUE || oplStatus.channels[9].flag4Op == TRUE || oplStatus.channels[10].flag4Op == TRUE || oplStatus.channels[11].flag4Op == TRUE)
+				{
+					oplStatus.channels[0].displayY = CHAN_TABLE_START_Y;
+					oplStatus.channels[3].displayY = CHAN_TABLE_START_Y+4;
+					oplStatus.channels[1].displayY = CHAN_TABLE_START_Y+8;
+					oplStatus.channels[4].displayY = CHAN_TABLE_START_Y+12;
+					oplStatus.channels[2].displayY = CHAN_TABLE_START_Y+16;
+					oplStatus.channels[5].displayY = CHAN_TABLE_START_Y+20;
+					oplStatus.channels[9].displayY = CHAN_TABLE_START_Y;
+					oplStatus.channels[12].displayY = CHAN_TABLE_START_Y+4;
+					oplStatus.channels[10].displayY = CHAN_TABLE_START_Y+8;
+					oplStatus.channels[13].displayY = CHAN_TABLE_START_Y+12;
+					oplStatus.channels[11].displayY = CHAN_TABLE_START_Y+16;
+					oplStatus.channels[14].displayY = CHAN_TABLE_START_Y+20;
+				}
 
 				// 0xAx Frequency (Low)
 				// 0xBx Key-On / Block / Frequency (High)
@@ -794,42 +827,34 @@ void drawTextUI(void)
 	sprintf(txtDrawBuffer, "%S", currentGD3Tag.releaseDate);
 	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+3,COLOR_LIGHTCYAN,COLOR_BLACK);
 
-	// Set positions for the channels (remember, they're out of order due to OPL3 pairing)
-	for (i=0; i<9; i++)
+	if (settings.struggleBus == FALSE)
 	{
-	oplStatus.channels[i].displayX = CHAN_TABLE_START_X;
-	}
-	if (maxChannels > 9)
-	{
-		for (i=9; i<18; i++)
+		// Set fixed X positions for the channels
+		for (i=0; i<9; i++)
 		{
-		oplStatus.channels[i].displayX = CHAN_TABLE_START_X+40;
+		oplStatus.channels[i].displayX = CHAN_TABLE_START_X;
 		}
-	}
-
-	oplStatus.channels[0].displayY = CHAN_TABLE_START_Y;
-	oplStatus.channels[3].displayY = CHAN_TABLE_START_Y+4;
-	oplStatus.channels[1].displayY = CHAN_TABLE_START_Y+8;
-	oplStatus.channels[4].displayY = CHAN_TABLE_START_Y+12;
-	oplStatus.channels[2].displayY = CHAN_TABLE_START_Y+16;
-	oplStatus.channels[5].displayY = CHAN_TABLE_START_Y+20;
-	oplStatus.channels[6].displayY = CHAN_TABLE_START_Y+24;
-	oplStatus.channels[7].displayY = CHAN_TABLE_START_Y+28;
-	oplStatus.channels[8].displayY = CHAN_TABLE_START_Y+32;
-
-	oplStatus.channels[9].displayY = CHAN_TABLE_START_Y;
-	oplStatus.channels[12].displayY = CHAN_TABLE_START_Y+4;
-	oplStatus.channels[10].displayY = CHAN_TABLE_START_Y+8;
-	oplStatus.channels[13].displayY = CHAN_TABLE_START_Y+12;
-	oplStatus.channels[11].displayY = CHAN_TABLE_START_Y+16;
-	oplStatus.channels[14].displayY = CHAN_TABLE_START_Y+20;
-	oplStatus.channels[15].displayY = CHAN_TABLE_START_Y+24;
-	oplStatus.channels[16].displayY = CHAN_TABLE_START_Y+28;
-	oplStatus.channels[17].displayY = CHAN_TABLE_START_Y+32;
-
-	if (settings.struggleBus == 0)
-	{
-
+		if (maxChannels > 9)
+		{
+			for (i=9; i<18; i++)
+			{
+				oplStatus.channels[i].displayX = CHAN_TABLE_START_X+40;
+			}
+		}
+		
+		// Set default Y positions for channels (2-op in-order)
+		for (i=0; i<9; i++)
+		{
+		oplStatus.channels[i].displayY = CHAN_TABLE_START_Y+(i*4);
+		}
+		if (maxChannels > 9)
+		{
+			for (i=9; i<18; i++)
+			{
+				oplStatus.channels[i].displayY = CHAN_TABLE_START_Y+((i-9)*4);
+			}
+		}
+			
 		for (i=0; i<maxChannels; i++)
 		{
 			// Initial channel numbers
