@@ -76,7 +76,7 @@ void drawChannelTable(void)
 	uint8_t tempAttribute = 0x0;
 
 	// Start at 0x20 as that is the lowest register we care about
-	for (i = 20; i <= displayRegisterMax; i++)
+	for (i = 0x20; i <= displayRegisterMax; i++)
 	{
 		// Found a changed register
 		if (oplChangeMap[i] == 1)
@@ -596,18 +596,18 @@ void drawChannelTable(void)
 			// OPL3 4-op flags
 			else if (i == 0x104)
 			{
-				oplStatus.channels[0].flag4Op = oplRegisterMap[0x104] & 0x01;
-				oplStatus.channels[3].flag4Op = oplRegisterMap[0x104] & 0x01;
-				oplStatus.channels[1].flag4Op = oplRegisterMap[0x104] & 0x02 >> 1;
-				oplStatus.channels[4].flag4Op = oplRegisterMap[0x104] & 0x02 >> 1;
-				oplStatus.channels[2].flag4Op = oplRegisterMap[0x104] & 0x04 >> 2;
-				oplStatus.channels[5].flag4Op = oplRegisterMap[0x104] & 0x04 >> 2;
-				oplStatus.channels[9].flag4Op = oplRegisterMap[0x104] & 0x08 >> 3;
-				oplStatus.channels[12].flag4Op = oplRegisterMap[0x104] & 0x08 >> 3;
-				oplStatus.channels[10].flag4Op = oplRegisterMap[0x104] & 0x10 >> 4;
-				oplStatus.channels[13].flag4Op = oplRegisterMap[0x104] & 0x10 >> 4;
-				oplStatus.channels[11].flag4Op = oplRegisterMap[0x104] & 0x20 >> 5;
-				oplStatus.channels[14].flag4Op = oplRegisterMap[0x104] & 0x20 >> 5;
+				oplStatus.channels[0].flag4Op = (oplRegisterMap[0x104] & 0x01);
+				oplStatus.channels[3].flag4Op = (oplRegisterMap[0x104] & 0x01);
+				oplStatus.channels[1].flag4Op = (oplRegisterMap[0x104] & 0x02) >> 1;
+				oplStatus.channels[4].flag4Op = (oplRegisterMap[0x104] & 0x02) >> 1;
+				oplStatus.channels[2].flag4Op = (oplRegisterMap[0x104] & 0x04) >> 2;
+				oplStatus.channels[5].flag4Op = (oplRegisterMap[0x104] & 0x04) >> 2;
+				oplStatus.channels[9].flag4Op = (oplRegisterMap[0x104] & 0x08) >> 3;
+				oplStatus.channels[12].flag4Op = (oplRegisterMap[0x104] & 0x08) >> 3;
+				oplStatus.channels[10].flag4Op = (oplRegisterMap[0x104] & 0x10) >> 4;
+				oplStatus.channels[13].flag4Op = (oplRegisterMap[0x104] & 0x10) >> 4;
+				oplStatus.channels[11].flag4Op = (oplRegisterMap[0x104] & 0x20) >> 5;
+				oplStatus.channels[14].flag4Op = (oplRegisterMap[0x104] & 0x20) >> 5;
 
 				// After changing 4-op flags, force redraw of things that may need repositioning or changed
 				
@@ -648,13 +648,13 @@ void drawChannelTable(void)
 				// 0xAx Frequency (Low)
 				// 0xBx Key-On / Block / Frequency (High)
 				// 0xCx Algorithm / Feedback / Panning
-				for (j = 0x00; j <= 0x02; j++)
+				for (j = 0x00; j <= 0x05; j++)
 				{
 					oplChangeMap[0xA0+j] = 1;
 					oplChangeMap[0xB0+j] = 1;
 					oplChangeMap[0xC0+j] = 1;
 				}
-				for (j = 0x00; j <= 0x02; j++)
+				for (j = 0x00; j <= 0x05; j++)
 				{
 					oplChangeMap[0x1A0+j] = 1;
 					oplChangeMap[0x1B0+j] = 1;
