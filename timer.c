@@ -26,6 +26,7 @@
 
 void interrupt (*biosISR8)(void);
 volatile uint32_t tickCounter = 0;
+volatile uint32_t screenCounter = 0;
 uint16_t biosCounter = 0;
 uint32_t fastTickRate;
 const uint16_t playbackFrequency = 44100;
@@ -74,6 +75,7 @@ void interrupt timerHandler(void)
 {
 	// Increment the counter cause the interrupt has happened
 	tickCounter=tickCounter+playbackFrequencyDivider;
+	screenCounter=screenCounter+playbackFrequencyDivider;
 	
 	// Since we have changed the timer rate, we have to determine when to call the BIOS ISR8 at its old rate.  This avoids the clock getting messed up.  While it may appear that biosCounter will only be less than fastTickRate one time, it will actually overflow back to 0 over time, making this a constant cycle.
 	biosCounter += fastTickRate;

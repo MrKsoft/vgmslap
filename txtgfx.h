@@ -28,6 +28,9 @@
 #define CHAN_DISP_OFFSET_CHANNEL_FEEDBACK 33
 #define CHAN_DISP_OFFSET_OPERATOR_PARAMETERS 9
 
+#define CHAN_BARS_START_X 7
+#define CHAN_BARS_START_Y 44
+
 // Attribute colors
 #define COLOR_BLACK 0x0
 #define COLOR_BLUE 0x1
@@ -96,5 +99,11 @@ extern const char tgAlgoFMFM[];
 extern const char tgAlgoASFM[];
 extern const char tgAlgoFMAS[];
 extern const char tgAlgoASAS[];
+
+// Output level bars - 1x6 (ish)
+// This array should be drawn with the alternative drawing function, due to vertical drawing and shared attribute
+// Each row is a "level" of the bar from max to zero (16 units) - weighted based on how much attenuation you can hear
+
+extern const char tgLevelBars[];
 
 #endif

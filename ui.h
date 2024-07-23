@@ -26,6 +26,7 @@
 void clearInterface(void);		// Clear text screen, but only certain parts of the UI
 void drawChannelTable(void);	// Reads OPL values, packs them into the structs, then draws the result to the screen
 								// (Only interprets and draws parts that change)
+void updateLevelBars(void);		// Draws level bars using interpreted values - done on global timer
 void drawTextUI(void);			// Draws the static UI components
 void inputHandler(void);		// Reads and acts upon keyboard commands
 
@@ -37,5 +38,20 @@ extern uint8_t keyboardCurrent;			// Current keycode from getch()
 extern uint8_t keyboardPrevious;		// Last processed keypress, to help identify a "new" vs "repeated" key
 extern uint8_t keyboardExtendedFlag;	// Flag for if we are reading an extended keycode
 extern uint8_t requestScreenDraw;		// Set to 1 when the screen needs to redraw
+
+///////////////////////////////////////////////////////////////////////////////
+// Struct declarations
+///////////////////////////////////////////////////////////////////////////////
+
+typedef struct
+{
+	SimAdsrPhase phase;
+	int simulatedLevel;
+	uint8_t targetOutput;
+	uint8_t xPos;
+	uint8_t width;
+} adsrSimulationChannels;
+
+extern adsrSimulationChannels adsrSim[18];
 
 #endif

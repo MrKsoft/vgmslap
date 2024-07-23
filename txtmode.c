@@ -127,11 +127,31 @@ void drawGraphicAtPosition(const char* graphicArray, uint8_t xSize, uint8_t ySiz
 	{
 		for (xCount = 0; xCount < xSize; xCount++)
 		{
-				// Generate the correct memory location to put the text using our predefined coordinate function
-				screenAddress = characterCoordinate((xOrigin+xCount), (yOrigin+yCount));
-				// Throw the data from the graphic array into memory at that location (character then attribute)
-				textScreen[screenAddress++] = graphicArray[(xCount+(yCount*xSize))];
-				textScreen[screenAddress++] = graphicArray[((xCount+(yCount*xSize))+maxChars)];
+			// Generate the correct memory location to put the text using our predefined coordinate function
+			screenAddress = characterCoordinate((xOrigin+xCount), (yOrigin+yCount));
+			// Throw the data from the graphic array into memory at that location (character then attribute)
+			textScreen[screenAddress++] = graphicArray[(xCount+(yCount*xSize))];
+			textScreen[screenAddress++] = graphicArray[((xCount+(yCount*xSize))+maxChars)];
+		}
+	}
+}
+
+void drawLevelBar(const char* graphicArray, uint8_t value, uint8_t xOrigin, uint8_t yOrigin, uint8_t width)
+{
+	uint8_t xCount;
+	uint8_t yCount;
+	uint8_t maxChars = 6;
+	uint16_t screenAddress;
+	
+	for (xCount = 0; xCount < width; xCount++)
+	{
+		for (yCount = 0; yCount < maxChars; yCount++)
+		{
+			// Generate the correct memory location to put the text using our predefined coordinate function
+			screenAddress = characterCoordinate((xOrigin+xCount), (yOrigin+yCount));
+			// Throw the data from the graphic array into memory at that location (character then attribute)
+			textScreen[screenAddress++] = graphicArray[((value*maxChars)+(yCount))];
+			textScreen[screenAddress++] = graphicArray[(96+yCount)]; // 96 = 6 chars per level * 16 levels to get to attribute data
 		}
 	}
 }

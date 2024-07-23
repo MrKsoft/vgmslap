@@ -138,11 +138,20 @@ int main(int argc, char** argv)
 			// Refresh screen
 			if (settings.struggleBus == 0)
 			{
+				// If a register value changed, requestScreenDraw gets set so that the new table values are drawn
 				if (requestScreenDraw > 0)
 				{
 					drawChannelTable();
-				}		
+					
+				}
+				// Channel bars at the bottom are refreshed at a slower rate
+				if (screenCounter > VGA_REFRESH_TICKS)
+				{
+					updateLevelBars();
+					screenCounter = 0;
+				}
 			}
+
 		}
 		// Things to do when we run out of song
 		else if (programState == STATE_END_OF_SONG)

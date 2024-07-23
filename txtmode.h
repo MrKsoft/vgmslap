@@ -44,6 +44,10 @@ void drawStringAtPosition(char* text, uint8_t xPos, uint8_t yPos, uint8_t foregr
 // Pass the name of the graphic array, dimensions, and then where you want it to start (top left)
 void drawGraphicAtPosition(const char* graphicArray, uint8_t xSize, uint8_t ySize, uint8_t xOrigin, uint8_t yOrigin);
 
+// Special drawing function for level bars - vertical, fixed height of 6
+// Drawn from top to bottom with shared attribute line
+void drawLevelBar(const char* graphicArray, uint8_t value, uint8_t xOrigin, uint8_t yOrigin, uint8_t width);
+
 ///////////////////////////////////////////////////////////////////////////////
 // Variable declarations
 ///////////////////////////////////////////////////////////////////////////////

@@ -36,6 +36,8 @@ uint8_t keyboardPrevious = 0;
 uint8_t keyboardExtendedFlag = 0;
 uint8_t requestScreenDraw;
 
+adsrSimulationChannels adsrSim[18];
+
 ///////////////////////////////////////////////////////////////////////////////
 // Functions
 ///////////////////////////////////////////////////////////////////////////////
@@ -367,8 +369,23 @@ void drawChannelTable(void)
 
 				// Key on
 				oplStatus.channels[targetChannel].keyOn = ((oplRegisterMap[i] >> 5) & 0x01);
+				
+				// Setup data for ADSR simulation (level bars)
+				
+				// A new note is being triggered - start attack
+				if (oplStatus.channels[targetChannel].keyOn == TRUE)
+				{
+					adsrSim[targetChannel].phase = PHASE_ATTACK;
+				}
+				// If key is off, then we are in release mode
+				// If sustain bit is off we might already be in this mode, that's okay
+				else
+				{
+					adsrSim[targetChannel].phase = PHASE_RELEASE;
+				}		
+
 				// Set what color to draw the Note icon with based on whether Key-On was set.
-				if (oplStatus.channels[targetChannel].keyOn == 1)
+				if (oplStatus.channels[targetChannel].keyOn == TRUE)
 				{
 					tempAttribute = COLOR_LIGHTMAGENTA;
 				}
@@ -627,6 +644,27 @@ void drawChannelTable(void)
 							oplStatus.channels[j].displayY = CHAN_TABLE_START_Y+((j-9)*4);				
 						}
 					}
+					// Change level bar X positions
+					adsrSim[0].xPos = (CHAN_TABLE_START_X+7);
+					adsrSim[1].xPos = (CHAN_TABLE_START_X+7)+3;
+					adsrSim[2].xPos = (CHAN_TABLE_START_X+7)+6;
+					adsrSim[3].xPos = (CHAN_TABLE_START_X+7)+9;
+					adsrSim[4].xPos = (CHAN_TABLE_START_X+7)+12;
+					adsrSim[5].xPos = (CHAN_TABLE_START_X+7)+15;
+					adsrSim[9].xPos = (CHAN_TABLE_START_X+47);
+					adsrSim[10].xPos = (CHAN_TABLE_START_X+47)+3;
+					adsrSim[11].xPos = (CHAN_TABLE_START_X+47)+6;
+					adsrSim[12].xPos = (CHAN_TABLE_START_X+47)+9;
+					adsrSim[13].xPos = (CHAN_TABLE_START_X+47)+12;
+					adsrSim[14].xPos = (CHAN_TABLE_START_X+47)+15;
+					
+					// Cleanup empty space between channel bars
+					for (j=0; j<18; j++)
+					{
+						drawLevelBar(tgLevelBars, 15, adsrSim[j].xPos+2, CHAN_BARS_START_Y, 1);
+					}
+					
+					
 				}
 				// If any channels switch to 4-op, use the 4-op ordering
 				if (oplStatus.channels[0].flag4Op == TRUE || oplStatus.channels[1].flag4Op == TRUE || oplStatus.channels[2].flag4Op == TRUE || oplStatus.channels[9].flag4Op == TRUE || oplStatus.channels[10].flag4Op == TRUE || oplStatus.channels[11].flag4Op == TRUE)
@@ -643,8 +681,32 @@ void drawChannelTable(void)
 					oplStatus.channels[13].displayY = CHAN_TABLE_START_Y+12;
 					oplStatus.channels[11].displayY = CHAN_TABLE_START_Y+16;
 					oplStatus.channels[14].displayY = CHAN_TABLE_START_Y+20;
+					
+					// Change level bar X positions
+					adsrSim[0].xPos = CHAN_BARS_START_X;
+					adsrSim[3].xPos = CHAN_BARS_START_X+3;
+					adsrSim[1].xPos = CHAN_BARS_START_X+6;
+					adsrSim[4].xPos = CHAN_BARS_START_X+9;
+					adsrSim[2].xPos = CHAN_BARS_START_X+12;
+					adsrSim[5].xPos = CHAN_BARS_START_X+15;
+					adsrSim[9].xPos = (CHAN_BARS_START_X+40);
+					adsrSim[12].xPos = (CHAN_BARS_START_X+40)+3;
+					adsrSim[10].xPos = (CHAN_BARS_START_X+40)+6;
+					adsrSim[13].xPos = (CHAN_BARS_START_X+40)+9;
+					adsrSim[11].xPos = (CHAN_BARS_START_X+40)+12;
+					adsrSim[14].xPos = (CHAN_BARS_START_X+40)+15;
+					
+					// Cleanup empty space between channel bars
+					for (j=0; j<18; j++)
+					{
+						if (oplStatus.channels[j].flag4Op == FALSE)
+						{
+							drawLevelBar(tgLevelBars, 15, adsrSim[j].xPos+2, CHAN_BARS_START_Y, 1);
+						}
+					}
 				}
 
+				// Force a cleanup of values
 				// 0xAx Frequency (Low)
 				// 0xBx Key-On / Block / Frequency (High)
 				// 0xCx Algorithm / Feedback / Panning
@@ -782,14 +844,223 @@ void drawChannelTable(void)
 			oplChangeMap[i] = 0;
 		}
 	}
+
+	for (i = 0; i < maxChannels; i++)
+	{
+	
+	}
+	
 	// Draw operation is done
 	requestScreenDraw = 0;
+}
+
+void updateLevelBars(void)
+{
+	// TODO: Investigate ability to properly handle notes with sustain flag off, where the attenuation is raised above the "perceived" level while the note is playing (ex. Twisted 64k intro song around 1:16)
+	// TODO: ADSRs get reset to Attack if 4-op channel modes change due to screen redraw process - difficult to differentiate between a legitimate new note and a redraw, especially during song initialization
+	
+	uint8_t i;
+	int tempSustainLevel;
+	uint8_t channelOffset;
+
+	for (i = 0; i < maxChannels; i++)
+	{
+		// Channel offset used to decide which channel's parameters to use for 4-op.
+		// I've found that it makes more sense to use the "secondary" channel's operator for those to get a good approximation of the ADSR's actual sound, so just shift what channel we are pulling from.
+		
+		if (i < 3 || (i > 5 && i < 12) || i > 14)
+		{
+			if (oplStatus.channels[i].flag4Op == TRUE)
+			{
+				channelOffset = 3;
+			}
+			else
+			{
+				channelOffset = 0;
+			}
+		}
+		else
+		{
+			channelOffset = 0;
+		}
+		
+		// Figure out what the target sustain level should be
+		
+		// Shift left is multiplying by 4, meaning the 16-level sustainLevel aligns with the 64 levels of outputLevel so we can estimate how low to decay to
+		tempSustainLevel = oplStatus.channels[i+channelOffset].operators[1].sustainLevel << 2;
+		
+		// Bounds check
+		if (tempSustainLevel > 0x3F)
+		{
+			tempSustainLevel = 0x3F;
+		}
+		else if (tempSustainLevel < 0)
+		{
+			tempSustainLevel = 0;
+		}
+		
+		// Attack
+		if (adsrSim[i].phase == PHASE_ATTACK)
+		{
+				if ((adsrSim[i].simulatedLevel - (oplStatus.channels[i+channelOffset].operators[1].attackRate)) >= oplStatus.channels[i].operators[1].outputLevel)
+				{
+					adsrSim[i].simulatedLevel = adsrSim[i].simulatedLevel - (oplStatus.channels[i+channelOffset].operators[1].attackRate);
+				}
+				else
+				{
+					// If we would meet/pass the target attack level, first cap it to the correct level, then switch to decay
+					adsrSim[i].simulatedLevel = oplStatus.channels[i+channelOffset].operators[1].outputLevel;
+					adsrSim[i].phase = PHASE_DECAY;
+				}
+		}
+		// Decay
+		else if (adsrSim[i].phase == PHASE_DECAY)
+		{
+			if (oplStatus.channels[i+channelOffset].operators[1].decayRate > 0)
+			{
+				if ((adsrSim[i].simulatedLevel - (oplStatus.channels[i+channelOffset].operators[1].decayRate)) <= tempSustainLevel)
+				{
+					// Use the decay value to meet the sustain level
+					adsrSim[i].simulatedLevel = adsrSim[i].simulatedLevel + (oplStatus.channels[i+channelOffset].operators[1].decayRate);
+				}
+				else
+				{
+					// If would meet/pass the target sustain level
+					// First set to the target level (but ONLY if the sustain level is actually lower than current - handles non-sustain notes where sustain is left at a defeault value)
+					if (adsrSim[i].simulatedLevel <= tempSustainLevel)
+					{
+						adsrSim[i].simulatedLevel = tempSustainLevel;
+					}
+					// No sustain bit - simulate release immediately
+					if (oplStatus.channels[i].operators[1].flagSoundSustaining == FALSE)
+					{
+						adsrSim[i].phase = PHASE_RELEASE;
+					}
+					// Sustain bit is on - go to sustain phase
+					else
+					{
+						adsrSim[i].phase = PHASE_SUSTAIN;
+					}
+				}
+			}
+		}
+		// Sustain
+		else if (adsrSim[i].phase == PHASE_SUSTAIN)
+		{
+			// Keep value set properly.
+			adsrSim[i].simulatedLevel = tempSustainLevel;
+		}
+		// Release
+		else if (adsrSim[i].phase == PHASE_RELEASE)
+		{
+			if (oplStatus.channels[i+channelOffset].operators[1].releaseRate > 0)
+			{
+				// Use the release value to return to 3F
+				if ((adsrSim[i].simulatedLevel + (oplStatus.channels[i+channelOffset].operators[1].releaseRate)) <= 0x3F)
+				{
+					adsrSim[i].simulatedLevel = adsrSim[i].simulatedLevel + (oplStatus.channels[i+channelOffset].operators[1].releaseRate);
+				}
+				else
+				{
+					adsrSim[i].simulatedLevel = 0x3F;
+				}
+			}
+		}
+		
+		// Final bounds check
+		if (adsrSim[i].simulatedLevel > 0x3F)
+		{
+			adsrSim[i].simulatedLevel = 0x3F;
+		}
+		else if (adsrSim[i].simulatedLevel < 0)
+		{
+			adsrSim[i].simulatedLevel = 0;
+		}
+
+		// Draw bars based on current simulatedLevel
+		if (i < 3 || (i > 5 && i < 12) || i > 14)
+		{
+			if ((adsrSim[i].simulatedLevel >> 2) == 15 && oplStatus.channels[i].keyOn == TRUE)
+			{
+				// Don't actually draw a channel as zeroed out if the key is still on - draw it one level higher
+				// Doing this because the ADSR simulation is, well, approximate, and some sounds decay slower than the bars do
+				// This, then, is a way to show that the sound is still on
+				if (oplStatus.channels[i].flag4Op == FALSE)
+				{
+					drawLevelBar(tgLevelBars, 14, adsrSim[i].xPos, CHAN_BARS_START_Y, 2);
+				}
+				else
+				{
+					drawLevelBar(tgLevelBars, 14, adsrSim[i].xPos, CHAN_BARS_START_Y, 5);
+				}
+			}
+			else
+			{
+				// Shift right is dividing by 4, turning 64-level attenuation into a 16-level one to fit our level bars
+				if (oplStatus.channels[i].flag4Op == FALSE)
+				{
+					drawLevelBar(tgLevelBars, (adsrSim[i].simulatedLevel >> 2), adsrSim[i].xPos, CHAN_BARS_START_Y, 2);
+				}
+				else
+				{
+					drawLevelBar(tgLevelBars, (adsrSim[i].simulatedLevel >> 2), adsrSim[i].xPos, CHAN_BARS_START_Y, 5);
+				}
+			}
+		}
+		else
+		{
+			// Well... only if this isn't the second channel of a 4op channel.
+			if (oplStatus.channels[i].flag4Op == FALSE)
+			{
+				if ((adsrSim[i].simulatedLevel >> 2) == 15 && oplStatus.channels[i].keyOn == TRUE)
+				{
+				// Don't actually draw a channel as zeroed out if the key is still on - draw it one level higher
+				// Doing this because the ADSR simulation is, well, approximate, and some sounds decay slower than the bars do
+				// This, then, is a way to show that the sound is still on
+				drawLevelBar(tgLevelBars, 14, adsrSim[i].xPos,  CHAN_BARS_START_Y, 2);
+				}
+				else
+				{
+				// Shift right is dividing by 4, turning 64-level attenuation into a 16-level one to fit our level bars
+				drawLevelBar(tgLevelBars, (adsrSim[i].simulatedLevel >> 2), adsrSim[i].xPos,  CHAN_BARS_START_Y, 2);
+				}
+			}
+		}
+	}
 }
 
 void drawTextUI(void)
 {
 	uint8_t i;
 	uint8_t j;
+
+	// Reset level bars
+
+	for (i = 0; i < maxChannels; i++)
+	{
+			adsrSim[i].simulatedLevel = 0x3F;
+	}
+	
+	// Set default xPos for level bars
+	adsrSim[0].xPos = CHAN_BARS_START_X;
+	adsrSim[1].xPos = CHAN_BARS_START_X+3;
+	adsrSim[2].xPos = CHAN_BARS_START_X+6;
+	adsrSim[3].xPos = CHAN_BARS_START_X+9;
+	adsrSim[4].xPos = CHAN_BARS_START_X+12;
+	adsrSim[5].xPos = CHAN_BARS_START_X+15;				
+	adsrSim[6].xPos = CHAN_BARS_START_X+18;
+	adsrSim[7].xPos = CHAN_BARS_START_X+21;
+	adsrSim[8].xPos = CHAN_BARS_START_X+24;
+	adsrSim[9].xPos = (CHAN_BARS_START_X+40);
+	adsrSim[10].xPos = (CHAN_BARS_START_X+40)+3;
+	adsrSim[11].xPos = (CHAN_BARS_START_X+40)+6;
+	adsrSim[12].xPos = (CHAN_BARS_START_X+40)+9;
+	adsrSim[13].xPos = (CHAN_BARS_START_X+40)+12;
+	adsrSim[14].xPos = (CHAN_BARS_START_X+40)+15;	
+	adsrSim[15].xPos = (CHAN_BARS_START_X+40)+18;
+	adsrSim[16].xPos = (CHAN_BARS_START_X+40)+21;
+	adsrSim[17].xPos = (CHAN_BARS_START_X+40)+24;
+
 
 	// Blue bar at top
 	for (i=0; i<55; i++)

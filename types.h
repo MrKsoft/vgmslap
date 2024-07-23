@@ -84,4 +84,11 @@ typedef enum{
 	DETECTED_OPL3
 } OplDetectedType;
 
+typedef enum{
+	PHASE_ATTACK,
+	PHASE_DECAY,
+	PHASE_SUSTAIN,
+	PHASE_RELEASE
+} SimAdsrPhase;
+
 #endif
