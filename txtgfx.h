@@ -52,6 +52,7 @@
 // Define special Code Page 437 characters
 
 #define CHAR_MUSIC_NOTE 0x0E
+#define CHAR_EXCLAMATION 0x21
 #define CHAR_BOX_SINGLE_HORIZONTAL 0xC4
 #define CHAR_BOX_DOUBLE_HORIZONTAL 0xCD
 #define CHAR_BOX_SINGLE_VERTICAL 0xB3

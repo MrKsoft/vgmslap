@@ -96,7 +96,8 @@ typedef struct
 	uint8_t flagOPL3Mode;
 	uint8_t tremoloDepth;
 	uint8_t frequencyVibratoDepth;
-	uint8_t percModeData;
+	uint8_t flagPercussionMode;
+	uint8_t percussionData;
 } oplChip;
 
 // Storage spot for interpreted OPL status

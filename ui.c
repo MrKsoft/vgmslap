@@ -76,6 +76,7 @@ void drawChannelTable(void)
 	uint8_t targetChannel;
 	uint8_t targetOperator;
 	uint8_t tempAttribute = 0x0;
+	uint8_t tempNoteSymbol;
 
 	// Start at 0x20 as that is the lowest register we care about
 	for (i = 0x20; i <= displayRegisterMax; i++)
@@ -368,7 +369,18 @@ void drawChannelTable(void)
 				oplStatus.channels[targetChannel].blockNumber = ((oplRegisterMap[i] >> 2) & 0x07);
 
 				// Key on
-				oplStatus.channels[targetChannel].keyOn = ((oplRegisterMap[i] >> 5) & 0x01);
+				// Don't actually use the keyOn value for channels 7-9 if percussion mode is activated
+				if (targetChannel >=6 && targetChannel <= 8)
+				{
+					if (oplStatus.flagPercussionMode == FALSE)
+					{
+						oplStatus.channels[targetChannel].keyOn = ((oplRegisterMap[i] >> 5) & 0x01);
+					}
+				}
+				else
+				{
+					oplStatus.channels[targetChannel].keyOn = ((oplRegisterMap[i] >> 5) & 0x01);
+				}
 				
 				// Setup data for ADSR simulation (level bars)
 				
@@ -383,6 +395,23 @@ void drawChannelTable(void)
 				{
 					adsrSim[targetChannel].phase = PHASE_RELEASE;
 				}		
+
+				// Set symbol to use for note
+				if ((targetChannel >= 6 && targetChannel <=8))
+				{
+					if (oplStatus.flagPercussionMode == TRUE)
+					{
+						tempNoteSymbol = CHAR_EXCLAMATION;
+					}
+					else
+					{
+						tempNoteSymbol = CHAR_MUSIC_NOTE;
+					}
+				}
+				else
+				{
+					tempNoteSymbol = CHAR_MUSIC_NOTE;
+				}
 
 				// Set what color to draw the Note icon with based on whether Key-On was set.
 				if (oplStatus.channels[targetChannel].keyOn == TRUE)
@@ -410,7 +439,7 @@ void drawChannelTable(void)
 							sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
 							drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+4, COLOR_YELLOW, COLOR_BLACK);
 							// Key on
-							drawCharacterAtPosition(CHAR_MUSIC_NOTE, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+5, tempAttribute, COLOR_BLACK);
+							drawCharacterAtPosition(tempNoteSymbol, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+5, tempAttribute, COLOR_BLACK);
 						}
 					}
 					else
@@ -422,7 +451,7 @@ void drawChannelTable(void)
 						sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
 						drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2, COLOR_YELLOW, COLOR_BLACK);
 						// Key on
-						drawCharacterAtPosition(CHAR_MUSIC_NOTE, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute, COLOR_BLACK);
+						drawCharacterAtPosition(tempNoteSymbol, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute, COLOR_BLACK);
 					}
 				}
 				// Positioning for 2-op channels
@@ -435,8 +464,58 @@ void drawChannelTable(void)
 					sprintf(txtDrawBuffer, "%.3X", oplStatus.channels[targetChannel].frequencyNumber);
 					drawStringAtPosition(txtDrawBuffer,oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO,oplStatus.channels[targetChannel].displayY+2, COLOR_YELLOW, COLOR_BLACK);
 					// Key on
-					drawCharacterAtPosition(CHAR_MUSIC_NOTE, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute, COLOR_BLACK);
+					drawCharacterAtPosition(tempNoteSymbol, oplStatus.channels[targetChannel].displayX+CHAN_DISP_OFFSET_CHANNEL_NOTEINFO+1, oplStatus.channels[targetChannel].displayY+3, tempAttribute, COLOR_BLACK);
 				}
+			}
+			
+			// Tremolo Depth / Vibrato Depth / Percussion Mode
+			// (Only currently dealing with Percussion Mode)
+			else if (i == 0xBD)
+			{
+				// Percussion Mode flag
+				oplStatus.flagPercussionMode = (oplRegisterMap[i] >> 5) & 0x01;
+				
+				// Store value of which percussion instruments are keyed-on
+				oplStatus.percussionData = oplRegisterMap[i] & 0x1F;
+				
+				// Based on which percussion is on, turn on the appropriate key-on for channels 7/8/9
+				// We also reset the changeMap to force a redraw of the appropriate section of the table
+				
+				// BD
+				if ((oplStatus.percussionData >> 4) & 0x01 == 1)
+				{
+					oplStatus.channels[6].keyOn = TRUE;
+					oplChangeMap[0xB6] = 1;
+				}
+				else
+				{
+					oplStatus.channels[6].keyOn = FALSE;
+					oplChangeMap[0xB6] = 1;
+				}
+				
+				// SD & HH
+				if (((oplStatus.percussionData >> 3) & 0x01 == 1) || (oplStatus.percussionData & 0x01 == 1))
+				{
+					oplStatus.channels[7].keyOn = TRUE;
+					oplChangeMap[0xB7] = 1;
+				}
+				else
+				{
+					oplStatus.channels[7].keyOn = FALSE;
+					oplChangeMap[0xB7] = 1;
+				}				
+				
+				// TT & CY
+				if (((oplStatus.percussionData >> 2) & 0x01 == 1) || ((oplStatus.percussionData >> 1) & 0x01 == 1))
+				{
+					oplStatus.channels[8].keyOn = TRUE;
+					oplChangeMap[0xB8] = 1;
+				}
+				else
+				{
+					oplStatus.channels[8].keyOn = FALSE;
+					oplChangeMap[0xB8] = 1;
+				}		
 			}
 
 			// Panning, Feedback, Algorithm
