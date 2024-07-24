@@ -1,3 +1,20 @@
+== [ Release 3 - 2024/07/23] ===================================================
+
+- Added some bars at the bottom of the screen showing channel output levels by
+  simulating the ADSR rates.  There are a few edge cases where it isn't accurate
+  but overall it provides a good approximation.
+- Slightly better representation of percussion mode - the note-on indicators
+  light up now, and change to a ! symbol to show they are percussion.  This will
+  likely be expanded later to a dedicated percussion mode display of some kind.
+- Fixed 4-op channel display - all 6 channels that were capable of 4-op were 
+  shown combined, even if only a single channel had the 4-op flag enabled.
+- Channels display in numerical order if 4-op mode is off.
+- Struggle bus mode fixed to not leave an empty channel table on screen - this
+  was a mistake introduced when reworking the drawing code.  It also now leaves
+  the system in 80x25 text mode instead of unnecessarily switching to 80x50.
+- Under the hood, the source code has been restructured.  It has been split out
+  from a single gigantic file, and now has a proper build system!  Rejoice!
+
 == [ Release 2 - 2024/05/18] ===================================================
 
 - Rewrote screen update code to only write screen areas when the actual chip

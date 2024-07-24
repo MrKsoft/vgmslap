@@ -1,7 +1,7 @@
 ################################################################################
 #  __      _______ __  __  _____ _             _                               #
 #  \ \    / / ____|  \/  |/ ____| |           | |                              #
-#   \ \  / / |  __| \  / | (___ | | __ _ _ __ | |          Release 2           #
+#   \ \  / / |  __| \  / | (___ | | __ _ _ __ | |          Release 3           #
 #    \ \/ /| | |_ | |\/| |\___ \| |/ _` | '_ \| |   by Wafflenet, 2023-2024    #
 #     \  / | |__| | |  | |____) | | (_| | |_) |_|       www.wafflenet.com      #
 #      \/   \_____|_|  |_|_____/|_|\__,_| .__/(_)                              #
@@ -26,7 +26,7 @@ section below for more information)
 
 VGMSlap runs in real mode, so only 640k of RAM is needed (probably less but I
 haven't tested for exact numbers).  A VGA card supporting 80x50 text mode is
-also required.
+also recommended.
 
 You'll also need a sound card with a Yamaha OPL2 (YM3812), Yamaha OPL3 (YMF262)
 or compatible chip.  The dual OPL2 chips on the Sound Blaster Pro 1.0 card are
@@ -129,6 +129,13 @@ Here is an example channel, a standard two-operator channel:
 	   
 	   The bottom line has a music note - represented as "n" in the drawing
 	   above - which lights up when a channel's key-on flag is set.
+
+	   If the OPL chip is in percussion/rhythm mode, channels 7-9 are used
+	   for percussion instruments.  The music note will change to a ! to
+	   represent this.  (Note that some songs may not appear to activate these
+	   channels due to how percussion mode works.  The flags may not be on long
+	   enough to be visible!)
+
 	   On 2xOPL2 or OPL3 VGMs, you will also see the parentheses surrounding
 	   the note.  These will light up based on the stereo panning for that
 	   channel.  On single OPL2 VGMs these will not be visible.
@@ -145,6 +152,7 @@ VGMSLAP.CFG is used to configure your OPL chip's I/O port and some playback and
 performance options.  I've included info on the options in the included default
 VGMSLAP.CFG, and I don't feel like repeating myself here, so go check it out for
 more info.
+
 
 == [ Setting Up Playlists ] ====================================================
 
@@ -192,8 +200,8 @@ some tips that may help if your music is lagging or stuttering.
   displaying the OPL channel data.  This is additional CPU overhead and if you
   have a slow VGA card, the screen updates might introduce even more lag.  You
   might want to try the STRUGGLE option in VGMSLAP.CFG, which removes the
-  channel display completely.  It's also nice if you just want a less busy
-  screen!
+  channel display completely and keeps you in 80x25 text mode.  It's also nice
+  if you just want a less busy screen!
 
 - VGMSlap runs entirely in real mode and thus currently does not use memory
   above 640k, so VGMs have to be streamed from disk.  Most systems I've tested
