@@ -21,7 +21,7 @@
 
 #include "types.h"
 
-#define VGMSLAP_VERSION "R3"
+#define VGMSLAP_VERSION "R4"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function declarations

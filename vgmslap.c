@@ -43,6 +43,7 @@ FILE *initialFilePointer;
 int main(int argc, char** argv)
 {
 	uint16_t i;
+	
 	// Check for arguments
 		if (argc != 2)
 		{
@@ -113,7 +114,8 @@ int main(int argc, char** argv)
 	// If playlist was found, open playlist, jump to playlist handler and load first song
 	if (playlistMode == TRUE)
 	{
-		playlistInit();
+		countPlaylistSongs();
+		playlistGet(1);
 	}
 	// Playlist wasn't found, so probably a VGM, try interpreting as such.
 	else if (playlistMode == FALSE)
@@ -156,15 +158,15 @@ int main(int argc, char** argv)
 		// Things to do when we run out of song
 		else if (programState == STATE_END_OF_SONG)
 		{
+			// Free loaded file pointer
+			fclose(vgmFilePointer);
+			
 			// Reset OPL, force screen redraw to set things back to default state
 			resetOPL();
 			if (settings.struggleBus == 0)
 			{
 				drawChannelTable();
 			}
-			
-			// Free loaded file pointer
-			fclose(vgmFilePointer);
 			
 			// Load new VGM and then restart playback
 			if (playlistMode == FALSE)

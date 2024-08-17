@@ -1162,20 +1162,32 @@ void drawTextUI(void)
 
 	// GD3 tag info
 	drawStringAtPosition("Title:  ",GD3_LABEL_START_X,GD3_START_Y,COLOR_LIGHTGREY,COLOR_BLACK);
-	sprintf(txtDrawBuffer, "%S", currentGD3Tag.trackNameE);
-	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y,COLOR_LIGHTCYAN,COLOR_BLACK);
+	if (currentGD3Tag.trackNameE != NULL)
+	{
+		sprintf(txtDrawBuffer, "%S", currentGD3Tag.trackNameE);
+		drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y,COLOR_LIGHTCYAN,COLOR_BLACK);
+	}
 
 	drawStringAtPosition("Artist: ",GD3_LABEL_START_X,GD3_START_Y+1,COLOR_LIGHTGREY,COLOR_BLACK);
-	sprintf(txtDrawBuffer, "%S", currentGD3Tag.originalAuthorE);
-	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+1,COLOR_LIGHTCYAN,COLOR_BLACK);
+	if (currentGD3Tag.originalAuthorE != NULL)
+	{
+		sprintf(txtDrawBuffer, "%S", currentGD3Tag.originalAuthorE);
+		drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+1,COLOR_LIGHTCYAN,COLOR_BLACK);
+	}
 
 	drawStringAtPosition("Game:   ",GD3_LABEL_START_X,GD3_START_Y+2,COLOR_LIGHTGREY,COLOR_BLACK);
-	sprintf(txtDrawBuffer, "%S", currentGD3Tag.gameNameE);
-	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+2,COLOR_LIGHTCYAN,COLOR_BLACK);
+	if (currentGD3Tag.gameNameE != NULL)
+	{
+		sprintf(txtDrawBuffer, "%S", currentGD3Tag.gameNameE);
+		drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+2,COLOR_LIGHTCYAN,COLOR_BLACK);
+	}
 
 	drawStringAtPosition("Date:   ",GD3_LABEL_START_X,GD3_START_Y+3,COLOR_LIGHTGREY,COLOR_BLACK);
-	sprintf(txtDrawBuffer, "%S", currentGD3Tag.releaseDate);
-	drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+3,COLOR_LIGHTCYAN,COLOR_BLACK);
+	if (currentGD3Tag.releaseDate != NULL)
+	{
+		sprintf(txtDrawBuffer, "%S", currentGD3Tag.releaseDate);
+		drawStringAtPosition(txtDrawBuffer,GD3_TAG_START_X,GD3_START_Y+3,COLOR_LIGHTCYAN,COLOR_BLACK);
+	}
 
 	if (settings.struggleBus == FALSE)
 	{

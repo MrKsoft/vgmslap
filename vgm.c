@@ -740,6 +740,9 @@ uint8_t loadVGM(void)
 
 	// Read the first 4 bytes so we can see the identifier.
 	// We want to check if this is a VGZ before continuing, and decompress first if so.
+	
+	// Make 100% sure that there's no leftover data in the buffer...
+	memset(vgmFileBuffer, 0, sizeof(vgmFileBuffer));
 
 	vgmReadBytes(4);
 	currentVGMHeader.fileIdentification = *((uint32_t *)&vgmFileBuffer[0x00]);
@@ -769,6 +772,9 @@ uint8_t loadVGM(void)
 			}
 		}
 		vgmFilePointer = fopen(settings.tempPath,"wb");
+		
+		// Make 100% sure that there's no leftover data in the buffer...
+		memset(gzipBuffer, 0, sizeof(gzipBuffer));
 
 		// Decompress bytes and throw them into the temp file
 		// This is done in 512b batches for performance, which will mean that the end of the temp file may have some extra data.  This is not a problem because 1) it's a temp file and 2) the VGM header already specifies where the EOF is and the parsing code knows what to do when it runs out of data.
@@ -777,6 +783,7 @@ uint8_t loadVGM(void)
 		{
 			fwrite(gzipBuffer, sizeof(char), sizeof(gzipBuffer), vgmFilePointer);
 		}
+
 		// No more data - close original gzipped file
 		gzclose_r(compressedFile);
 
@@ -991,19 +998,34 @@ uint8_t loadVGM(void)
 
 void populateCurrentGd3(void)
 {
+		// Ensure any previously allocated pointers to tags are freed.
+		// Otherwise memory will leak over time for playlists.
+		// When these are set to the default values (below) this is technically undefined behavior, but it seems to work fine?
+		free(currentGD3Tag.trackNameE);
+		free(currentGD3Tag.trackNameJ);
+		free(currentGD3Tag.gameNameE);
+		free(currentGD3Tag.gameNameJ);
+		free(currentGD3Tag.systemNameE);
+		free(currentGD3Tag.systemNameJ);
+		free(currentGD3Tag.originalAuthorE);
+		free(currentGD3Tag.originalAuthorJ);
+		free(currentGD3Tag.releaseDate);
+		free(currentGD3Tag.converter);
+		free(currentGD3Tag.notes);
+
 		// Fill in default values
 		currentGD3Tag.tagLength = 0;
-		currentGD3Tag.trackNameE = L"";
-		currentGD3Tag.trackNameJ = L"";
-		currentGD3Tag.gameNameE = L"";
-		currentGD3Tag.gameNameJ = L"";
-		currentGD3Tag.systemNameE = L"";
-		currentGD3Tag.systemNameJ = L"";
-		currentGD3Tag.originalAuthorE = L"";
-		currentGD3Tag.originalAuthorJ = L"";
-		currentGD3Tag.releaseDate = L"";
-		currentGD3Tag.converter = L"";
-		currentGD3Tag.notes = L"";
+		currentGD3Tag.trackNameE = NULL;
+		currentGD3Tag.trackNameJ = NULL;
+		currentGD3Tag.gameNameE = NULL;
+		currentGD3Tag.gameNameJ = NULL;
+		currentGD3Tag.systemNameE = NULL;
+		currentGD3Tag.systemNameJ = NULL;
+		currentGD3Tag.originalAuthorE = NULL;
+		currentGD3Tag.originalAuthorJ = NULL;
+		currentGD3Tag.releaseDate = NULL;
+		currentGD3Tag.converter = NULL;
+		currentGD3Tag.notes = NULL;
 
 		// There is a GD3, fill it in
 		if (currentVGMHeader.gd3Offset != 0 )
