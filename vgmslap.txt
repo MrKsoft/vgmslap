@@ -1,7 +1,7 @@
 ################################################################################
 #  __      _______ __  __  _____ _             _                               #
 #  \ \    / / ____|  \/  |/ ____| |           | |                              #
-#   \ \  / / |  __| \  / | (___ | | __ _ _ __ | |          Release 3           #
+#   \ \  / / |  __| \  / | (___ | | __ _ _ __ | |          Release 4           #
 #    \ \/ /| | |_ | |\/| |\___ \| |/ _` | '_ \| |   by Wafflenet, 2023-2024    #
 #     \  / | |__| | |  | |____) | | (_| | |_) |_|       www.wafflenet.com      #
 #      \/   \_____|_|  |_|_____/|_|\__,_| .__/(_)                              #
@@ -70,11 +70,14 @@ Once in the program, a few keys are available:
 Arrow Keys:     Move forward and backwards through a playlist.
                 (Only available if using a playlist)
 
+Page Up/Down:   Move forward and backwards 10 tracks in a playlist.
+                (Only available if using a playlist)
+
 Esc:            Quit VGMSlap				 
 
 R:              Reset the OPL chip.
                 Note, this WILL mess up playback.  It's basically a debug key I
-				left in, but it might be useful as an emergency panic button!
+                left in, but it might be useful as an emergency panic button!
 
 
 == [ How to Read the Channel Display ] =========================================
@@ -92,54 +95,54 @@ Here is an example channel, a standard two-operator channel:
                     |   |->#                         x2 204|
                     |#--'    ^-^- F324 -VS- F --- 2A    (n)|
                     '--------------------------------------'
-					 (A)     (B)  (C)  (D) (E)(F) (G)(H)(I)
+                     (A)     (B)  (C)  (D) (E)(F) (G)(H)(I)
 
     A. A small diagram shows how the modulator (cyan) and carrier (green) are
-	   connected and output the note (yellow).  Note these colors as they are
-	   used throughout the channel table.
-	   
-	B. ASCII-art approximations of the OPL waveforms currently selected.
-	
-	C. Operator ADSR (Attack/Decay/Sustain/Release) envelope data, in that
+       connected and output the note (yellow).  Note these colors as they are
+       used throughout the channel table.
+
+    B. ASCII-art approximations of the OPL waveforms currently selected.
+
+    C. Operator ADSR (Attack/Decay/Sustain/Release) envelope data, in that
        order.	Values are from 0 to F (15).
-	   
-	D. Operator flags for Tremolo/Amplitude Vibrato (T), Frequecy Vibrato (V),
-	   Sound Sustaining (S), and Key Scaling (K), in that order.
-	   
-	E. Frequency multiplication factor.
-	
-	F. Key scale attenuation level, in dB per octave.
-	
-	G. Output level.  This is technically "output attenuation", that is, a value
-	   of "00" means full volume, and "3F" is silence.
-	
-	H. Feedback modulation factor (the amount of the modulator that is sent back
-	   into itself).  Note that for space reasons, this is not depicted in the
-	   diagram at (A).
-	   
-	I. Note information.  The top number is the "block number" (roughly the
-	   octave) and the middle number is the frequency number.  These can be
-	   converted to a sound frequency in Hz using the equation:
-	   
-	   Frequency = (49716*FrequencyNumber)/(2^(20-BlockNumber))
-	   
-	   I do eventually plan to add this math and automatically convert it to
-	   a note value, but it's a lot of multiplication and division and has
-	   performance implications, so there's still some investigation needed.
-	   
-	   The bottom line has a music note - represented as "n" in the drawing
-	   above - which lights up when a channel's key-on flag is set.
 
-	   If the OPL chip is in percussion/rhythm mode, channels 7-9 are used
-	   for percussion instruments.  The music note will change to a ! to
-	   represent this.  (Note that some songs may not appear to activate these
-	   channels due to how percussion mode works.  The flags may not be on long
-	   enough to be visible!)
+    D. Operator flags for Tremolo/Amplitude Vibrato (T), Frequecy Vibrato (V),
+       Sound Sustaining (S), and Key Scaling (K), in that order.
 
-	   On 2xOPL2 or OPL3 VGMs, you will also see the parentheses surrounding
-	   the note.  These will light up based on the stereo panning for that
-	   channel.  On single OPL2 VGMs these will not be visible.
-	   
+    E. Frequency multiplication factor.
+
+    F. Key scale attenuation level, in dB per octave.
+
+    G. Output level.  This is technically "output attenuation", that is, a value
+       of "00" means full volume, and "3F" is silence.
+
+    H. Feedback modulation factor (the amount of the modulator that is sent back
+       into itself).  Note that for space reasons, this is not depicted in the
+       diagram at (A).
+
+    I. Note information.  The top number is the "block number" (roughly the
+       octave) and the middle number is the frequency number.  These can be
+       converted to a sound frequency in Hz using the equation:
+
+       Frequency = (49716*FrequencyNumber)/(2^(20-BlockNumber))
+
+       I do eventually plan to add this math and automatically convert it to
+       a note value, but it's a lot of multiplication and division and has
+       performance implications, so there's still some investigation needed.
+
+       The bottom line has a music note - represented as "n" in the drawing
+       above - which lights up when a channel's key-on flag is set.
+
+       If the OPL chip is in percussion/rhythm mode, channels 7-9 are used
+       for percussion instruments.  The music note will change to a ! to
+       represent this.  (Note that some songs may not appear to activate these
+       channels due to how percussion mode works.  The flags may not be on long
+       enough to be visible!)
+
+       On 2xOPL2 or OPL3 VGMs, you will also see the parentheses surrounding
+       the note.  These will light up based on the stereo panning for that
+       channel.  On single OPL2 VGMs these will not be visible.
+
 For four-operator OPL3 channels, two channels are combined.  The first two lines
 will be the first channel's operators, and the second two lines will be the
 second channel's operators.  A "4OP" indicator will show in the top-right of the
@@ -190,11 +193,11 @@ some tips that may help if your music is lagging or stuttering.
   
    *OK, hopping on the soapbox for a sec.  The reduction in "accuracy" is
     technically true, but most VGMs are logged from playback engines that have
-	considerably lower resolution than the format's 44100Hz base rate.  As a
-	result, you probably won't actually notice any problems unless you set an
-	absurdly high DIVIDER value (like 255).  Even then, I've found that it
-	mostly just makes fancier percussion instruments a little "clicky".
-	Don't sweat it too much if you need to increase the value. :)
+    considerably lower resolution than the format's 44100Hz base rate.  As a
+    result, you probably won't actually notice any problems unless you set an
+    absurdly high DIVIDER value (like 255).  Even then, I've found that it
+    mostly just makes fancier percussion instruments a little "clicky".
+    Don't sweat it too much if you need to increase the value. :)
   
 - There is a lot of behind the scenes code that goes into interpreting and
   displaying the OPL channel data.  This is additional CPU overhead and if you
@@ -251,8 +254,8 @@ VGMSlap incorporates zlib 1.2.11:
 
   Jean-loup Gailly        Mark Adler
   jloup@gzip.org          madler@alumni.caltech.edu
-  
-  
+
+
 The VGMSlap software and code itself is licensed under the MIT License:
 
   Copyright 2023-2024 Wafflenet

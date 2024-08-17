@@ -1,3 +1,8 @@
+== [ Release 4 - 2024/08/17] ===================================================
+
+- Fixed memory leak in GD3 tag handling when using playlists
+- Added ability to skip through a playlist by 10s using Page Up/Page Down
+
 == [ Release 3 - 2024/07/23] ===================================================
 
 - Added some bars at the bottom of the screen showing channel output levels by
