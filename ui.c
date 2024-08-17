@@ -1322,6 +1322,39 @@ void inputHandler (void)
 					programState = STATE_END_OF_SONG;
 
 				}
+
+				// Page Up
+				if (keyboardCurrent == 0x49)
+				{
+					// Go back 11 because the state handler already increments by 1
+					if (playlistLineNumber < 11)
+					{
+						playlistLineNumber = 0;
+					}
+					else
+					{
+						playlistLineNumber = playlistLineNumber - 11;
+					}
+					programState = STATE_END_OF_SONG;
+				}
+
+				// Page Down
+				if (keyboardCurrent == 0x51)
+				{
+					// Go forward 9 because the state handler already increments by 1
+					if (playlistLineNumber < (playlistMax - 9))
+					{
+						playlistLineNumber = playlistLineNumber + 9;
+
+					}
+					else
+					{
+						playlistLineNumber = playlistMax-1;
+					}
+					// Treat like the track finished
+					programState = STATE_END_OF_SONG;
+
+				}
 			}
 		}
 
