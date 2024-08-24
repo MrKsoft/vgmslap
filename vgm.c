@@ -831,6 +831,9 @@ uint8_t loadVGM(void)
 		killProgram(ERROR_VGM_VERSION);
 	}
 
+	// Reset VGM chip detection
+	vgmChipType = VGM_NO_OPL;
+
 	// Check for OPL2
 	if (currentVGMHeader.ym3812Clock > 0)
 	{
@@ -910,7 +913,7 @@ uint8_t loadVGM(void)
 				break;
 			}
 			// If Dual OPL2 was detected we secretly shift the base IO to base+8 so that single OPL2 goes to both stereo channels
-			if (detectedChip == DETECTED_DUAL_OPL2)
+			else if (detectedChip == DETECTED_DUAL_OPL2)
 			{
 				oplBaseAddr = settings.oplBase+8;
 				break;
@@ -928,7 +931,7 @@ uint8_t loadVGM(void)
 				break;
 			}
 			// If Dual OPL2 was detected we secretly shift the base IO to base+8 so that single OPL2 goes to both stereo channels
-			if (detectedChip == DETECTED_DUAL_OPL2)
+			else if (detectedChip == DETECTED_DUAL_OPL2)
 			{
 				oplBaseAddr = settings.oplBase+8;
 				break;
