@@ -706,7 +706,7 @@ void drawChannelTable(void)
 				oplStatus.channels[14].flag4Op = (oplRegisterMap[0x104] & 0x20) >> 5;
 
 				// After changing 4-op flags, force redraw of things that may need repositioning or changed
-				
+
 				// Recalculate Y positions of channels
 				// Go in channel number order if we are in 2-op
 				if (oplStatus.channels[0].flag4Op == FALSE && oplStatus.channels[1].flag4Op == FALSE && oplStatus.channels[2].flag4Op == FALSE && oplStatus.channels[9].flag4Op == FALSE && oplStatus.channels[10].flag4Op == FALSE && oplStatus.channels[11].flag4Op == FALSE)
@@ -720,7 +720,7 @@ void drawChannelTable(void)
 						}
 						else
 						{
-							oplStatus.channels[j].displayY = CHAN_TABLE_START_Y+((j-9)*4);				
+							oplStatus.channels[j].displayY = CHAN_TABLE_START_Y+((j-9)*4);
 						}
 					}
 					// Change level bar X positions
@@ -736,14 +736,12 @@ void drawChannelTable(void)
 					adsrSim[12].xPos = (CHAN_TABLE_START_X+47)+9;
 					adsrSim[13].xPos = (CHAN_TABLE_START_X+47)+12;
 					adsrSim[14].xPos = (CHAN_TABLE_START_X+47)+15;
-					
+
 					// Cleanup empty space between channel bars
 					for (j=0; j<18; j++)
 					{
 						drawLevelBar(tgLevelBars, 15, adsrSim[j].xPos+2, CHAN_BARS_START_Y, 1);
 					}
-					
-					
 				}
 				// If any channels switch to 4-op, use the 4-op ordering
 				if (oplStatus.channels[0].flag4Op == TRUE || oplStatus.channels[1].flag4Op == TRUE || oplStatus.channels[2].flag4Op == TRUE || oplStatus.channels[9].flag4Op == TRUE || oplStatus.channels[10].flag4Op == TRUE || oplStatus.channels[11].flag4Op == TRUE)
@@ -760,7 +758,7 @@ void drawChannelTable(void)
 					oplStatus.channels[13].displayY = CHAN_TABLE_START_Y+12;
 					oplStatus.channels[11].displayY = CHAN_TABLE_START_Y+16;
 					oplStatus.channels[14].displayY = CHAN_TABLE_START_Y+20;
-					
+
 					// Change level bar X positions
 					adsrSim[0].xPos = CHAN_BARS_START_X;
 					adsrSim[3].xPos = CHAN_BARS_START_X+3;
@@ -774,7 +772,7 @@ void drawChannelTable(void)
 					adsrSim[13].xPos = (CHAN_BARS_START_X+40)+9;
 					adsrSim[11].xPos = (CHAN_BARS_START_X+40)+12;
 					adsrSim[14].xPos = (CHAN_BARS_START_X+40)+15;
-					
+
 					// Cleanup empty space between channel bars
 					for (j=0; j<18; j++)
 					{
@@ -785,7 +783,27 @@ void drawChannelTable(void)
 					}
 				}
 
-				// Force a cleanup of values
+				// Force a cleanup/redraw of channel-level values
+				// Operator-level
+				// 0x20-0x35 Flags/Mul
+				// 0x40-0x55 KSL/Output
+				// 0x60-0x75 AD
+				// 0x80-0x95 SR
+				// 0xE0-0xF5 Waveform
+				for (j = 0x00; j <= 0x15; j++)
+				{
+					oplChangeMap[0x20+j] = 1;
+					oplChangeMap[0x40+j] = 1;
+					oplChangeMap[0x60+j] = 1;
+					oplChangeMap[0x80+j] = 1;
+					oplChangeMap[0xE0+j] = 1;
+					oplChangeMap[0x120+j] = 1;
+					oplChangeMap[0x140+j] = 1;
+					oplChangeMap[0x160+j] = 1;
+					oplChangeMap[0x180+j] = 1;
+					oplChangeMap[0x1E0+j] = 1;
+				}
+				// Channel-level
 				// 0xAx Frequency (Low)
 				// 0xBx Key-On / Block / Frequency (High)
 				// 0xCx Algorithm / Feedback / Panning
@@ -794,14 +812,10 @@ void drawChannelTable(void)
 					oplChangeMap[0xA0+j] = 1;
 					oplChangeMap[0xB0+j] = 1;
 					oplChangeMap[0xC0+j] = 1;
-				}
-				for (j = 0x00; j <= 0x05; j++)
-				{
 					oplChangeMap[0x1A0+j] = 1;
 					oplChangeMap[0x1B0+j] = 1;
 					oplChangeMap[0x1C0+j] = 1;
 				}
-
 				// Channel names
 				for (j=0; j < maxChannels; j++)
 				{
